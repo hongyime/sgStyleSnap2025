@@ -1,9 +1,8 @@
-import { supabase, handleSupabaseError, isSupabaseConfigured } from '@/lib/supabase'
+import { supabase, handleSupabaseError } from '@/lib/supabase'
 
 export class NotificationsService {
   constructor() {
     this.subscriptions = new Map()
-    this.setupRealtimeSubscription()
   }
 
   async getNotifications(filters = {}) {
@@ -212,61 +211,6 @@ export class NotificationsService {
   unsubscribe(subscription) {
     if (subscription) {
       supabase.removeChannel(subscription)
-    }
-  }
-
-  setupRealtimeSubscription() {
-    // Set up automatic cleanup for old notifications (7 days)
-    this.scheduleNotificationCleanup()
-  }
-
-  async scheduleNotificationCleanup() {
-    try {
-      // Run cleanup every hour
-      setInterval(async () => {
-        await this.cleanupOldNotifications()
-      }, 60 * 60 * 1000) // 1 hour
-
-      // Run initial cleanup
-      await this.cleanupOldNotifications()
-    } catch (error) {
-      console.error('Error setting up notification cleanup:', error)
-    }
-  }
-
-  async cleanupOldNotifications() {
-    try {
-      // Skip cleanup if Supabase is not configured
-      if (!isSupabaseConfigured || !supabase) {
-        console.log('⚠️ NotificationsService: Supabase not configured, skipping cleanup')
-        return
-      }
-
-      const sevenDaysAgo = new Date()
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-
-      // Try to delete old notifications instead of updating removed_at
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .lt('created_at', sevenDaysAgo.toISOString())
-
-      if (error) {
-        console.error('Error cleaning up old notifications:', error)
-        // If deletion fails, try the function approach
-        try {
-          const { error: functionError } = await supabase.rpc('cleanup_expired_notifications')
-          if (functionError) {
-            console.error('Error running cleanup function:', functionError)
-          }
-        } catch (functionErr) {
-          console.error('Cleanup function not available:', functionErr)
-        }
-      } else {
-        console.log('✅ Successfully cleaned up old notifications')
-      }
-    } catch (error) {
-      console.error('Error in notification cleanup:', error)
     }
   }
 

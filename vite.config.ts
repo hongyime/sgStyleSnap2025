@@ -20,6 +20,7 @@ export default defineConfig({
     include: [
       'tests/unit/utils/**/*.test.js',
       'tests/unit/stores/**/*.test.js',
+      'tests/unit/services/**/*.test.js',
     ],
     exclude: [
       'node_modules/**',
@@ -76,4 +77,3 @@ export default defineConfig({
     exclude: ['three'] // Three.js is loaded dynamically
   }
 })
-
