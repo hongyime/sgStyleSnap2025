@@ -44,6 +44,9 @@ jobs:
     - name: Run unit tests
       run: npm test || echo "Tests skipped - not fully configured"
       continue-on-error: true
+
+    - name: Verify notification retention and subscriptions
+      run: node node_modules/vitest/vitest.mjs run tests/unit/services/notificationsService.test.js --environment node
     
     - name: Upload build artifacts
       uses: actions/upload-artifact@v7
