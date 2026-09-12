@@ -76,6 +76,9 @@
           <!-- Mobile Menu Button -->
           <button
             class="md:hidden flex items-center justify-center px-3 py-2"
+            :aria-label="isMenuOpen ? 'Close menu' : 'Open menu'"
+            :aria-expanded="isMenuOpen"
+            aria-controls="landing-mobile-menu"
             @click="isMenuOpen = !isMenuOpen"
           >
             <X v-if="isMenuOpen" class="w-5 h-5 text-gray-900" />
@@ -85,7 +88,7 @@
       </div>
       
       <!-- Mobile Menu -->
-      <div v-if="isMenuOpen" class="md:hidden mt-2 rounded-xl bg-gray-100/70 backdrop-blur-md border border-gray-200/50 shadow-lg animate-slideInDown">
+      <div v-if="isMenuOpen" id="landing-mobile-menu" class="md:hidden mt-2 rounded-xl bg-gray-100/70 backdrop-blur-md border border-gray-200/50 shadow-lg animate-slideInDown">
         <div class="py-4 px-4 flex flex-col gap-3">
           <a href="#demo" @click="isMenuOpen = false" class="text-sm font-medium text-gray-900 hover:text-gray-600 transition py-2">Demo</a>
           <button
@@ -2527,7 +2530,7 @@ const setScrollY = (value) => {
 }
 
 /* Ensure mobile menu also stays light */
-.landing-nav-pill .md\\:hidden {
+.landing-nav-pill [class~="md:hidden"] {
   background-color: rgba(243, 244, 246, 0.85) !important;
   /* Reduce blur for better performance */
   backdrop-filter: blur(8px) !important;
@@ -2889,6 +2892,4 @@ const setScrollY = (value) => {
   transform: translateY(0) scale(1);
 }
 </style>
-
-
 

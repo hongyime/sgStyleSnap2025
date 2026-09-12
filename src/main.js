@@ -17,37 +17,23 @@ import { useTheme } from './composables/useTheme'
 import { useThemeStore } from './stores/theme-store'
 import { setupPageTransition, setupFocusManagement } from '@/composables/usePageTransition'
 // import { displayConsoleArt } from '@/utils/console-art' // Disabled for cleaner console
-import { env as onnxEnv } from 'onnxruntime-web'
 import { sanitizeUrl, sanitizeEmail, safeLog, safeError, safeWarn } from '@/utils/log-sanitizer'
 
-// Configure ONNX Runtime Web: prefer SIMD + multithreading under COI, otherwise safe fallback
-try {
-  const coi = typeof self !== 'undefined' && !!self.crossOriginIsolated
-  if (coi) {
-    onnxEnv.wasm.simd = true
-    onnxEnv.wasm.numThreads = Math.max(2, (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) || 4)
-  } else {
-    onnxEnv.wasm.simd = false
-    onnxEnv.wasm.numThreads = 1
-  }
-} catch (_) {
-  // Fallback if env not accessible; defaults are fine
-}
-
-// Import page components
-import Landing from './pages/Landing.vue'
-import Home from './pages/Home.vue'
-import Cabinet from './pages/Cabinet.vue'
-import Outfits from './pages/Outfits.vue'
-import OutfitCreator from './pages/OutfitCreator.vue'
-import Friends from './pages/Friends.vue'
-import Profile from './pages/Profile.vue'
-import FriendCabinet from './pages/FriendCabinet.vue'
-import FriendProfile from './pages/FriendProfile.vue'
-import Login from './pages/Login.vue'
-import Logout from './pages/Logout.vue'
-import OAuthCallback from './pages/OAuthCallback.vue'
-import NotFound from './pages/NotFound.vue'
+// Load each page after navigation guards allow entry. Shared sub-routes reuse
+// the same loader and Vue Router caches a successfully loaded component.
+const Landing = () => import('./pages/Landing.vue')
+const Home = () => import('./pages/Home.vue')
+const Cabinet = () => import('./pages/Cabinet.vue')
+const Outfits = () => import('./pages/Outfits.vue')
+const OutfitCreator = () => import('./pages/OutfitCreator.vue')
+const Friends = () => import('./pages/Friends.vue')
+const Profile = () => import('./pages/Profile.vue')
+const FriendCabinet = () => import('./pages/FriendCabinet.vue')
+const FriendProfile = () => import('./pages/FriendProfile.vue')
+const Login = () => import('./pages/Login.vue')
+const Logout = () => import('./pages/Logout.vue')
+const OAuthCallback = () => import('./pages/OAuthCallback.vue')
+const NotFound = () => import('./pages/NotFound.vue')
 
 /**
  * Application Routes Configuration
@@ -506,10 +492,12 @@ async function logApiConfiguration() {
   console.log('')
 }
 
-// Log API configuration on startup
-logApiConfiguration().catch(err => {
-  console.warn('⚠️ Could not log API configuration:', err)
-})
+// Diagnostic imports should not load provider SDKs on production landing pages.
+if (import.meta.env.DEV) {
+  logApiConfiguration().catch(err => {
+    console.warn('⚠️ Could not log API configuration:', err)
+  })
+}
 
 const authInitPromise = authStore.initializeAuth().then(async () => {
   console.log('✅ Auth store initialized successfully')
