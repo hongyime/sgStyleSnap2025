@@ -4,10 +4,9 @@
 name: StyleSnap CI
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_dispatch:
+
+# Automatic validation is consolidated in ci.yml on production Node 24.
 
 jobs:
   build-and-test:
@@ -29,11 +28,10 @@ jobs:
         cache: 'npm'
     
     - name: Install dependencies
-      run: npm install
+      run: npm ci
     
     - name: Run linter (if configured)
       run: npm run lint --if-present
-      continue-on-error: true
     
     - name: Build with Vite
       run: npm run build
@@ -42,8 +40,7 @@ jobs:
         NODE_ENV: production
     
     - name: Run unit tests
-      run: npm test || echo "Tests skipped - not fully configured"
-      continue-on-error: true
+      run: npm test
 
     - name: Verify notification retention and subscriptions
       run: node node_modules/vitest/vitest.mjs run tests/unit/services/notificationsService.test.js --environment node

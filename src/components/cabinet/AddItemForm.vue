@@ -119,7 +119,7 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { Brain, AlertCircle, X } from 'lucide-vue-next'
 import { classifyClothingItem, validateImageForClassification } from '@/services/fashion-rnn-service'
 import { ClothesService } from '@/services/clothesService'
-import { removeBackground } from 'modern-rembg'
+import { removeBackground } from '@/utils/background-removal'
 import BrandAutocomplete from '@/components/ui/BrandAutocomplete.vue'
 // Added prop for owned categories
 const props = defineProps({
@@ -500,4 +500,3 @@ watch(() => props.isOpen, (isOpen) => {
   }
 }
 </style>
-

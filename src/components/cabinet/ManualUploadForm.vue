@@ -392,7 +392,7 @@ const handleFileUpload = async (e) => {
     // 2) Background removal (best-effort)
     let processedFile = file
     try {
-      const { removeBackground } = await import('modern-rembg')
+      const { removeBackground } = await import('@/utils/background-removal')
       const blob = await removeBackground(file)
       processedFile = new File([blob], file.name.replace(/\.[^.]+$/, '') + '-nobg.png', { type: 'image/png' })
     } catch (bgErr) {
@@ -622,4 +622,3 @@ const handleSubmit = async () => {
   }
 }
 </script>
-

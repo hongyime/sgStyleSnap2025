@@ -26,7 +26,6 @@
     "noImplicitAny": false,
     
     /* Path aliases */
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     },
@@ -50,4 +49,3 @@
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
-

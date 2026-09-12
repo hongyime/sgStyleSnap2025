@@ -26,7 +26,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 
 // Dynamic Three.js import for code splitting
 let THREE = null
@@ -73,6 +73,14 @@ const checkMobile = () => {
 // Three.js variables
 let scene, camera, renderer, loader, avatar = null
 let animationFrameId = null
+let disposed = false
+let avatarLoadId = 0
+let dimensionFrameId = null
+let finishDimensionWait = null
+let visibilityObserver = null
+let resizeObserver = null
+let resizeTimeout = null
+let initialResizeTimeout = null
 let autoRotateSpeed = 0.012 // Increased rotation speed (doubled from 0.006)
 
 // Animation state
@@ -99,18 +107,23 @@ const initThreeJS = async () => {
   if (!canvasRef.value) return
   
   await loadThreeJS()
+  if (disposed) return
 
   // Wait for container to have dimensions
   await new Promise((resolve) => {
+    finishDimensionWait = resolve
     const checkDimensions = () => {
-      if (canvasRef.value && canvasRef.value.clientWidth > 0 && canvasRef.value.clientHeight > 0) {
+      if (disposed || (canvasRef.value && canvasRef.value.clientWidth > 0 && canvasRef.value.clientHeight > 0)) {
+        finishDimensionWait = null
+        dimensionFrameId = null
         resolve()
       } else {
-        requestAnimationFrame(checkDimensions)
+        dimensionFrameId = requestAnimationFrame(checkDimensions)
       }
     }
     checkDimensions()
   })
+  if (disposed) return
 
   // Scene
   scene = new THREE.Scene()
@@ -172,7 +185,8 @@ const initThreeJS = async () => {
 
 // Load avatar model
 const loadAvatar = async () => {
-  if (!loader || !props.avatarUrl) return
+  if (disposed || !loader || !props.avatarUrl) return
+  const loadId = ++avatarLoadId
   
   isLoading.value = true
   
@@ -187,6 +201,10 @@ const loadAvatar = async () => {
     })
     
     const avatarModel = gltf.scene
+    if (disposed || loadId !== avatarLoadId) {
+      disposeModel(avatarModel)
+      return
+    }
     
     // Scale and center avatar
     const box = new THREE.Box3().setFromObject(avatarModel)
@@ -224,6 +242,7 @@ const loadAvatar = async () => {
     isLoading.value = false
     startAnimationLoop()
   } catch (error) {
+    if (disposed || loadId !== avatarLoadId) return
     console.error('Failed to load avatar:', error)
     isLoading.value = false
   }
@@ -418,6 +437,7 @@ const executeAnimation = (model, animationType, progress) => {
 // Animation loop with frame skipping
 const startAnimationLoop = () => {
   const animate = () => {
+    if (disposed) return
     animationFrameId = requestAnimationFrame(animate)
     
     // Skip rendering if not visible
@@ -581,8 +601,9 @@ watch(() => props.autoRotate, (shouldRotate) => {
 // IntersectionObserver to pause when not visible
 onMounted(() => {
   if (containerRef.value) {
-    const visibilityObserver = new IntersectionObserver(
+    visibilityObserver = new IntersectionObserver(
       (entries) => {
+        if (disposed) return
         entries.forEach((entry) => {
           isVisible = entry.isIntersecting && props.autoRotate
         })
@@ -594,63 +615,66 @@ onMounted(() => {
     )
     visibilityObserver.observe(containerRef.value)
     
-    // Store observer for cleanup
-    containerRef.value._visibilityObserver = visibilityObserver
-    
     // Add ResizeObserver to handle container size changes
-    const resizeObserver = new ResizeObserver(() => {
+    resizeObserver = new ResizeObserver(() => {
+      if (disposed) return
       // Debounce resize handling
-      if (containerRef.value._resizeTimeout) {
-        clearTimeout(containerRef.value._resizeTimeout)
-      }
-      containerRef.value._resizeTimeout = setTimeout(() => {
+      clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(() => {
         handleResize()
       }, 100)
     })
     resizeObserver.observe(containerRef.value)
     
-    // Store resize observer for cleanup
-    containerRef.value._resizeObserver = resizeObserver
-    
     // Initial resize after a short delay to ensure container has rendered
-    setTimeout(() => {
+    initialResizeTimeout = setTimeout(() => {
       handleResize()
     }, 100)
   }
 })
 
-// Cleanup
-const cleanup = () => {
+// Dispose resources owned by this model, including late loader results.
+const disposeModel = (model) => {
+  const resources = new Set()
+  model.traverse((child) => {
+    if (!child.isMesh) return
+    if (child.geometry) resources.add(child.geometry)
+    const materials = Array.isArray(child.material) ? child.material : [child.material]
+    for (const material of materials) {
+      if (!material) continue
+      resources.add(material)
+      for (const value of Object.values(material)) {
+        if (value?.isTexture) resources.add(value)
+      }
+    }
+  })
+  resources.forEach(resource => resource.dispose())
+}
+
+// A model change must retain the renderer; unmount disposes it separately.
+const cleanupAvatar = () => {
+  avatarLoadId++
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId)
+    animationFrameId = null
   }
   
   if (avatar) {
-    avatar.traverse((child) => {
-      if (child.isMesh) {
-        child.geometry?.dispose()
-        if (Array.isArray(child.material)) {
-          child.material.forEach(mat => mat.dispose())
-        } else {
-          child.material?.dispose()
-        }
-      }
-    })
+    disposeModel(avatar)
     scene.remove(avatar)
     avatar = null
   }
   
-  if (renderer) {
-    renderer.dispose()
-  }
+  originalBoneStates = null
+  originalModelState = null
+  isAnimating = false
 }
 
 // Watch for avatar URL changes
 watch(() => props.avatarUrl, async (newUrl) => {
-  if (newUrl && loader) {
-    cleanup()
-    originalModelState = null // Reset model state
-    await loadAvatar()
+  if (!disposed && loader) {
+    cleanupAvatar()
+    if (newUrl) await loadAvatar()
   }
 })
 
@@ -659,35 +683,28 @@ onMounted(async () => {
   window.addEventListener('resize', checkMobile) // Re-check on resize
   
   await initThreeJS()
+  if (disposed) return
   window.addEventListener('resize', handleResize)
   
   // Set initial visibility based on autoRotate prop
   isVisible = props.autoRotate
 })
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
+  disposed = true
   window.removeEventListener('resize', handleResize)
   window.removeEventListener('resize', checkMobile)
   
-  // Cleanup visibility observer
-  if (containerRef.value && containerRef.value._visibilityObserver) {
-    containerRef.value._visibilityObserver.disconnect()
-    delete containerRef.value._visibilityObserver
-  }
-  
-  // Cleanup resize observer
-  if (containerRef.value && containerRef.value._resizeObserver) {
-    containerRef.value._resizeObserver.disconnect()
-    delete containerRef.value._resizeObserver
-  }
-  
-  // Cleanup resize timeout
-  if (containerRef.value && containerRef.value._resizeTimeout) {
-    clearTimeout(containerRef.value._resizeTimeout)
-    delete containerRef.value._resizeTimeout
-  }
-  
-  cleanup()
+  visibilityObserver?.disconnect()
+  resizeObserver?.disconnect()
+  clearTimeout(resizeTimeout)
+  clearTimeout(initialResizeTimeout)
+  if (dimensionFrameId) cancelAnimationFrame(dimensionFrameId)
+  finishDimensionWait?.()
+  finishDimensionWait = null
+  cleanupAvatar()
+  renderer?.dispose()
+  renderer = null
 })
 </script>
 
@@ -735,4 +752,3 @@ onUnmounted(() => {
   }
 }
 </style>
-

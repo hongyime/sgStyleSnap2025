@@ -4,13 +4,10 @@
 name: E2E Tests (Playwright)
 
 on:
-  pull_request:
-    branches: [ "main" ]
-  schedule:
-    # Run tests daily at 2 AM UTC
-    - cron: '0 2 * * 1' # Weekly Monday 10am SGT
   workflow_dispatch:
-    # Allow manual trigger
+
+# These legacy provider integration scenarios require an isolated test service.
+# Credential-free navigation smoke checks run automatically in ci.yml.
 
 env:
   VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -39,7 +36,7 @@ jobs:
           node-version: '20.x'
       
       - name: Install dependencies
-        run: npm install
+        run: npm ci
       
       - name: Install Playwright browsers
         run: npx playwright install --with-deps ${{ matrix.browser }}
@@ -57,17 +54,16 @@ jobs:
       - name: Run Playwright tests
         run: |
           if [ -f "playwright.config.js" ]; then
-            npm run test:e2e -- --project=${{ matrix.browser }} || echo "E2E tests failed - check logs"
+            npm run test:e2e -- --project=${{ matrix.browser }}
           else
-            echo "Playwright config not found - skipping E2E tests"
-            exit 0
+            echo "Playwright config not found"
+            exit 1
           fi
         env:
           # Test environment
           NODE_ENV: test
           CI: true
           VITE_APP_URL: ${{ secrets.VITE_APP_URL || 'http://localhost:5173' }}
-        continue-on-error: true
       
       - name: Upload Playwright report
         uses: actions/upload-artifact@v7
