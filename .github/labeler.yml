@@ -1,79 +1,77 @@
-# Labeler configuration for automatic PR labeling
-# Based on file paths changed in the PR
-
-# Frontend components
+# Retained legacy configuration, using the current actions/labeler schema.
 frontend:
-  - 'src/components/**'
-  - 'src/pages/**'
-  - 'src/composables/**'
-  - 'src/stores/**'
-  - 'src/services/**'
-  - 'src/utils/**'
-  - 'src/assets/**'
-  - 'src/index.css'
-  - 'src/main.js'
-
-# Backend/Database
+- changed-files:
+  - any-glob-to-any-file:
+    - src/components/**
+    - src/pages/**
+    - src/composables/**
+    - src/stores/**
+    - src/services/**
+    - src/utils/**
+    - src/assets/**
+    - src/index.css
+    - src/main.js
 database:
-  - 'database/migrations/**'
-  - 'database/**/*.sql'
-  - 'supabase/**'
-
-# API
+- changed-files:
+  - any-glob-to-any-file:
+    - database/migrations/**
+    - database/**/*.sql
+    - supabase/**
 api:
-  - 'api/**'
-  - '*.js'
-  - '*.ts'
-
-# Edge Functions
+- changed-files:
+  - any-glob-to-any-file:
+    - api/**
+    - '*.js'
+    - '*.ts'
 edge-function:
-  - 'supabase/functions/**'
-
-# Documentation
+- changed-files:
+  - any-glob-to-any-file:
+    - supabase/functions/**
 documentation:
-  - 'docs/**'
-  - '*.md'
-  - 'README.md'
-  - 'CHANGELOG.md'
-
-# Tests
+- changed-files:
+  - any-glob-to-any-file:
+    - docs/**
+    - '*.md'
+    - README.md
+    - CHANGELOG.md
 tests:
-  - 'tests/**'
-  - '**/*.test.js'
-  - '**/*.test.ts'
-  - '**/*.spec.js'
-  - '**/*.spec.ts'
-  - 'playwright.config.js'
-
-# CI/CD
+- changed-files:
+  - any-glob-to-any-file:
+    - tests/**
+    - '**/*.test.js'
+    - '**/*.test.ts'
+    - '**/*.spec.js'
+    - '**/*.spec.ts'
+    - playwright.config.js
 ci:
-  - '.github/workflows/**'
-  - '.github/labeler.yml'
-  - '.github/**'
-
-# Configuration
+- changed-files:
+  - any-glob-to-any-file:
+    - .github/workflows/**
+    - .github/labeler.yml
+    - .github/**
 config:
-  - '*.config.js'
-  - '*.config.ts'
-  - '*.json'
-  - 'package.json'
-  - 'package-lock.json'
-  - 'tsconfig.json'
-  - 'tailwind.config.js'
-  - 'vite.config.ts'
-  - 'postcss.config.js'
-  - 'vercel.json'
-  - '.env.example'
-
-# Styles
+- changed-files:
+  - any-glob-to-any-file:
+    - '*.config.js'
+    - '*.config.ts'
+    - '*.json'
+    - package.json
+    - package-lock.json
+    - tsconfig.json
+    - tailwind.config.js
+    - vite.config.ts
+    - postcss.config.js
+    - vercel.json
+    - .env.example
 styles:
-  - 'src/**/*.css'
-  - 'src/tokens/**'
-  - 'tailwind.config.js'
-  - 'postcss.config.js'
-
-# Dependencies
+- changed-files:
+  - any-glob-to-any-file:
+    - src/**/*.css
+    - src/tokens/**
+    - tailwind.config.js
+    - postcss.config.js
 dependencies:
-  - 'package.json'
-  - 'package-lock.json'
-
+- changed-files:
+  - any-glob-to-any-file:
+    - package.json
+    - package-lock.json
