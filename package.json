@@ -30,7 +30,7 @@
     "lucide-vue-next": "^1.0.0",
     "modern-rembg": "^0.1.2",
     "motion": "^12.23.24",
-    "onnxruntime-web": "^1.24.3",
+    "onnxruntime-web": "1.18.0",
     "pinia": "^3.0.4",
     "tailwind-merge": "^3.5.0",
     "three": "^0.184.0",
