@@ -1,0 +1,29 @@
+{
+  "task": "Browser inference compatibility",
+  "base": "5b978408d7d91b43298ae8563249b61765ebaced",
+  "status": "local checks passed; native-hardware check and hosted release pending",
+  "tasks": [
+    "Reproduce model/runtime compatibility with a small synthetic offline inference fixture.",
+    "Repair the verified runtime/dependency issue while preserving lazy loading and provider records.",
+    "Run locked install, unit/build/browser checks and exact-commit CI; verify production aliases.",
+    "Preserve local edits, update the portfolio ledger and publish Markdown/HTML evidence."
+  ],
+  "constraints": "Use synthetic offline input; preserve production records, model choice and existing provider configuration.",
+  "finding": "modern-rembg 0.1.2 requires ONNX Runtime Web 1.18.0 and bundles its matching WASM assets. The previously installed 1.24.3 stalled with document-is-not-defined worker errors under production isolation headers.",
+  "changes": [
+    "Pin onnxruntime-web to the exact 1.18.0 peer dependency; enforce peer resolution.",
+    "Add offline real-model browser coverage in isolated/non-isolated desktop/mobile contexts and verify repeated foreground/mask processing."
+  ],
+  "validation": {
+    "unit_cases": 70,
+    "browser_cases": 14,
+    "node": "24.21.0",
+    "typecheck_and_build": "pass",
+    "audit_known_vulnerabilities": 0
+  },
+  "remaining": [
+    "Verify native hardwareConcurrency and clean locked install.",
+    "Verify final PR checks and production deployment on both aliases.",
+    "Preserve original local ignore/env changes and update portfolio evidence."
+  ]
+}
