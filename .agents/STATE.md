@@ -1,15 +1,21 @@
 # StyleSnap maintenance
 
-The production app still uses Cloudinary for media. The encrypted manifest export
-is released; no archive schema, media copy or application cutover is enabled.
+The production app still uses Cloudinary. PR #134's single-asset metadata probe
+passed live: one stable ETag, three metadata requests, no media or Supabase calls.
+The batch endpoint does not return the ETags required by the archive draft.
 
-A manual metadata probe was released in PR #133 after all hosted checks passed.
-Its live run stopped with `etag_unavailable` after two requests and 4,461 response
-bytes; no media or database requests were made. The batch endpoint omits ETags.
-A follow-up mode checks one asset using documented `image_metadata=true` detail
-reads, retaining the original three-request / 64 KiB response bounds. Its first
-live run is pending. A sample does not establish full parity or capacity.
+The disabled archive draft is reconciled onto that released main, preserving
+the export and probe tools. Asset-detail reads now use the verified endpoint and
+64 KiB cap, with both passes budgeted before requests. The shared 200-unit limit
+supports 100 originals or 88 variants with two bounded inventories. A provider
+failure ends the attempt; staged data and reservations remain for reconciliation.
+All 148 offline tests pass. Hosted validation and source publication are next.
 
-Next: validate and release the detail mode, run it once, and record its result.
-Keep the private archive worker draft disabled until fresh identities, full
-delivery parity, privacy and current organization capacity are verified.
+The unchanged retained manifest uses 80 checkpoints and reserves 594,719,352
+Storage bytes plus at most 3,298,163,708 Supabase transfer bytes. Corrected source
+accounting adds 15,814 Admin units and at most 1,236,140,032 metadata response
+bytes before retries. These are bounds, not verified current usage/headroom.
+
+No archive SQL, bucket, media copy or cutover is enabled. All source records and
+raw manifest provenance must remain. Current usage, delivery-byte parity, four
+unmaterialized thumbnail references and private readers/writers remain open.
