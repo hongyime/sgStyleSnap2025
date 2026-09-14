@@ -60,6 +60,15 @@ variant lookup can be diagnosed without repeating the original asset inventory.
 
 Manifest validation: `python -m unittest discover -s tests/maintenance -p test_stylesnap_media.py -v`.
 
+The manual **Media identity metadata probe** checks the archive worker's exact
+`by_asset_ids` field selection before any copy is enabled. It samples at most ten
+images and makes at most three metadata-only Admin API requests, with 64 KiB
+response limits, no pagination or retries. Both fresh identity reads must return
+ETags and match each other and the sampled identity. Only aggregate counts and
+fixed failure codes are reported. It needs only the existing Cloudinary secrets;
+it downloads no media and makes no database or Storage requests. Passing this
+sample does not establish full-inventory consistency or migration capacity.
+
 The separate **Encrypted media manifest export** workflow preserves that complete
 raw manifest for private review, including unresolved references and every source
 metadata field. It encrypts the canonical bytes in memory with a fresh AES-256-GCM

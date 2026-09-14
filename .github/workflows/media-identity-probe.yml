@@ -1,0 +1,50 @@
+name: Media identity metadata probe
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/media-identity-probe.yml
+      - scripts/stylesnap_identity_probe.py
+      - scripts/stylesnap_media.py
+      - tests/maintenance/test_stylesnap_identity_probe.py
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/media-identity-probe.yml
+      - scripts/stylesnap_identity_probe.py
+      - scripts/stylesnap_media.py
+      - tests/maintenance/test_stylesnap_identity_probe.py
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stylesnap-private-media-manifest
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s tests/maintenance -p 'test_stylesnap_*.py' -v
+
+  probe:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Check a sample using at most three metadata requests
+        run: python3 scripts/stylesnap_identity_probe.py
+        env:
+          VITE_CLOUDINARY_CLOUD_NAME: ${{ secrets.VITE_CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
