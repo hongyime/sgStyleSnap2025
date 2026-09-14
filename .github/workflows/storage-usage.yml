@@ -1,0 +1,48 @@
+name: Cloudinary storage usage
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/storage-usage.yml
+      - scripts/cloudinary-usage.py
+      - tests/maintenance/test_cloudinary_usage.py
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/storage-usage.yml
+      - scripts/cloudinary-usage.py
+      - tests/maintenance/test_cloudinary_usage.py
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudinary-storage-usage-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s tests/maintenance -p test_cloudinary_usage.py -v
+
+  inventory:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Read aggregate usage
+        run: python3 scripts/cloudinary-usage.py
+        env:
+          VITE_CLOUDINARY_CLOUD_NAME: ${{ secrets.VITE_CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
