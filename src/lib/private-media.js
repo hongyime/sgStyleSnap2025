@@ -59,7 +59,7 @@ export async function readPrivateMedia(client, reference, { signal, timeoutMs = 
       .select('source_table,source_id,source_column,source_url,manifest_sha,content_sha256,object_path,content_bytes,mime_type')
       .eq('source_table', reference.table).eq('source_id', reference.id)
       .eq('source_column', reference.column).eq('source_url', reference.sourceUrl)
-      .abortSignal(controller.signal).maybeSingle()
+      .retry(false).abortSignal(controller.signal).maybeSingle()
     if (controller.signal.aborted) throw new PrivateMediaError('media_read_cancelled')
     if (error || !binding) throw new PrivateMediaError('media_unavailable')
     if (!validBinding(binding, reference)) throw new PrivateMediaError('invalid_media_binding')
