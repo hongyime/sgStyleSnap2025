@@ -122,6 +122,27 @@ application require the remaining source-parity, privacy and capacity checks.
 
 Archive validation: `python -m unittest discover -s tests/maintenance -p 'test_stylesnap_*.py' -v`.
 
+Private delivery preparation adds a separate migration with reads disabled.
+Verified bindings identify a retained source row, field, URL and manifest; their
+SELECT policy reuses that row's existing RLS. Changed source URLs, revoked
+friendships and hidden catalog rows invalidate access on the next request.
+Storage policies allow only authenticated object GET/info, not listing, signing,
+uploads or provenance files. Enabling reads requires an existing private bucket.
+No new delivery schema has been applied and no bucket has been created.
+
+`readPrivateMedia` uses the caller's Supabase client to check one binding and
+stream one object, with a deadline and the recorded byte limit. It checks the
+SHA-256 before returning an image Blob, and never falls back to the source URL.
+It uses no Vercel proxy, paid transformation, signed URL or shared result cache.
+Application integration must bound simultaneous readers and revoke object URLs
+when records, sessions or views change. Binding generation from verified copy
+checkpoints, private uploads, full image-view integration and live Storage HTTP
+validation remain required before cutover.
+
+Run `npm run test:media-access` for isolated PostgreSQL RLS and real Supabase SDK
+reader tests. The SQL fixture contains synthetic records and the source SELECT
+policies observed on 14 September 2026; it is not a full hosted Supabase instance.
+
 The derived-asset worker draft now retains complete parent provenance, verifies
 fresh identities before and after every batch, and persists variant checkpoints
 only after private read-back. A separate bounded source-content probe compares

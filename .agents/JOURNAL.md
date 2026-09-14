@@ -6,3 +6,7 @@
 2026-09-14: Asset-detail adapters pass 148 offline tests. Both identity passes fit before a request; variants reserve two 12-unit scans and use an 88-object limit. Retained-manifest accounting is 15,814 source Admin units before retries; Storage/transfer reservations remain unchanged and copy gates remain closed.
 
 2026-09-14: PR #135 exposed cross-workflow cancellation before the manifest validation job started. Separate offline checks by workflow/ref while preserving the shared manual metadata group and cancel-in-progress: false. Require the full 148-test hosted result before release.
+
+2026-09-14: Private media delivery will reuse current source-row RLS through verified source-field bindings; archive manifests and checkpoints remain service-only. Reads stay disabled during implementation.
+
+2026-09-14: Prepared access policy and browser reader pass 41 isolated tests; current source grants match the fixture. Read buffers are byte-limited and SHA-256 checked, cancellation closes pending streams, and no source-URL fallback or shared auth cache is used. Existing unit tests/build pass; live activation and application integration remain open.

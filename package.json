@@ -16,7 +16,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "purge-old-items": "echo 'Purge script not implemented yet' && exit 0",
-    "cloudinary-cleanup": "echo 'Cloudinary cleanup script not implemented yet' && exit 0"
+    "cloudinary-cleanup": "echo 'Cloudinary cleanup script not implemented yet' && exit 0",
+    "test:media-access": "node --test tests/maintenance/stylesnap-media-access.test.mjs tests/maintenance/stylesnap-private-reader.test.mjs"
   },
   "dependencies": {
     "@getbrevo/brevo": "^5.0.4",
@@ -38,6 +39,7 @@
     "vue-router": "^5.0.6"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "@playwright/test": "^1.40.0",
     "@tailwindcss/postcss": "^4.2.4",
     "@types/node": "^25.5.0",
