@@ -1,25 +1,23 @@
 # StyleSnap maintenance
 
-The production app still uses Cloudinary. PR #134's single-asset metadata probe
-passed live: one stable ETag, three metadata requests, no media or Supabase calls.
-The batch endpoint does not return the ETags required by the archive draft.
+PR #135 is released at a5166348; production still uses Cloudinary. The archive
+copy remains disabled, its SQL unapplied, and all source media/provenance retained.
 
-The disabled archive draft is reconciled onto that released main, preserving
-the export and probe tools. Asset-detail reads now use the verified endpoint and
-64 KiB cap, with both passes budgeted before requests. The shared 200-unit limit
-supports 100 originals or 88 variants with two bounded inventories. A provider
-failure ends the attempt; staged data and reservations remain for reconciliation.
-All 148 offline tests pass. PR #135 carries the archive source and keeps copying
-disabled. Its first hosted build and preview passed, but a shared concurrency
-group cancelled full validation. Offline checks now use workflow/ref groups;
-manual live tools retain their shared group. Validate the updated PR head and
-production release before closing source publication.
+PR #136 prepares private delivery on a separate branch. Read-only live schema
+checks confirm the existing public, owner, friend and history access rules, and no
+Storage object policies. The new prepared binding/access migration starts with
+reads disabled. It delegates to source-row RLS, matches the current source URL,
+and restricts Storage access to authenticated object GET/info operations. It
+creates no bucket and grants no upload, overwrite, deletion or provenance access.
 
-The unchanged retained manifest uses 80 checkpoints and reserves 594,719,352
-Storage bytes plus at most 3,298,163,708 Supabase transfer bytes. Corrected source
-accounting adds 15,814 Admin units and at most 1,236,140,032 metadata response
-bytes before retries. These are bounds, not verified current usage/headroom.
+The prepared migration passes 22 PostgreSQL RLS tests with synthetic records and
+the observed SELECT policies. The browser reader passes 19 real-SDK tests with
+injected responses: exact byte/hash parity, rejected mappings, stream limits,
+deadline cancellation and fresh permission checks. Existing 76 unit tests and
+the production build pass. Source-table grants and RLS flags were also confirmed
+read-only. No live migrations, Storage requests or media transfers were run.
 
-No archive SQL, bucket, media copy or cutover is enabled. All source records and
-raw manifest provenance must remain. Current usage, delivery-byte parity, four
-unmaterialized thumbnail references and private readers/writers remain open.
+The reader is not connected to views yet. Next: generate bindings from verified
+copy checkpoints, integrate readers with bounded concurrency and object-URL
+cleanup, finish private uploads and validate hosted Storage behavior. Monthly and
+source quota headroom, complete delivery parity and cutover remain open.
