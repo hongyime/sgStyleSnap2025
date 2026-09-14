@@ -137,12 +137,27 @@ The metadata query explicitly disables the SDK's default retries, so a network
 failure or HTTP 520 ends after one attempt instead of issuing four requests.
 It uses no Vercel proxy, paid transformation, signed URL or shared result cache.
 Application integration must bound simultaneous readers and revoke object URLs
-when records, sessions or views change. Binding generation from verified copy
-checkpoints, private uploads, full image-view integration and live Storage HTTP
-validation remain required before cutover.
+when records, sessions or views change. Private uploads, full image-view integration
+and live Storage HTTP validation remain required before cutover.
 
-Run `npm run test:media-access` for isolated PostgreSQL RLS and real Supabase SDK
-reader tests. The SQL fixture contains synthetic records and the source SELECT
+The binding planner now checks all five source tables against complete original
+and variant copy checkpoints and explicit delivery-byte receipts. Every field
+remains represented, including external references and reviewed missing defaults;
+unverified mappings block publication. The full private plan needs its own storage
+reservation, separate from the checkpoint pool, and compressed read-back parity
+before publishing. Reservations include stored objects, uncertain uploads, unused
+checkpoint space and other projects in the organization.
+
+The service-only publisher commits at most 100 fields / 256 KB per transaction.
+It checks the batch hash, current source URL and stored object size, preserves
+conflicting bindings and resumes from durable progress after a lost response.
+The new prepared migration requires completed publication and the same copy
+checkpoint before read activation. It creates no bucket or copy schedule and does
+not enable production delivery. Fresh quota checks, final source parity, complete
+application integration and hosted privacy checks still gate the actual cutover.
+
+Run `npm run test:media-access` for isolated PostgreSQL RLS/publication and real
+Supabase SDK reader tests. The SQL fixture contains synthetic records and the source SELECT
 policies observed on 14 September 2026; it is not a full hosted Supabase instance.
 
 The derived-asset worker draft now retains complete parent provenance, verifies
@@ -151,7 +166,7 @@ only after private read-back. A separate bounded source-content probe compares
 candidate delivery bytes with materialized variant bytes. Captured source
 metadata is never rewritten when ETags were omitted: fresh ETags must be present
 and stable, and their observed identity checksum is retained separately.
-The implementation passes 148 full maintenance tests, including bounded detail
+The earlier archive implementation passed 148 full maintenance tests, including bounded detail
 queries, paired budgets, failed-copy retention and smaller-batch resumption.
 The retained manifest gives 38 candidate variant associations and four
 thumbnail URLs without a materialized match; none is yet byte-parity proof.
@@ -162,6 +177,9 @@ units before retries. The bounded source metadata responses could total up to
 1.24 GB; these are maximum responses, not observed traffic. Source API headroom,
 batch scheduling and monthly organization usage must be verified before copy.
 The complete plan remains ineligible while reference/parity gaps are unresolved.
+Those archive-only estimates exclude the later binding plan, binding database
+rows and their publication requests. The publisher reserves its private plan
+and each transfer attempt against fresh remaining capacity before proceeding.
 
 Clothing images now use a bundled placeholder for the two known missing legacy
 default URLs and failed image loads. Presentation leaves stored source URLs and
