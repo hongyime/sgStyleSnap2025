@@ -90,6 +90,31 @@ class Reader:
         self.stage = "configuration"
 
     def request(self, url, headers, maximum=MAX_JSON_BYTES, method="GET", data=None):
+        # Keep privileged requests at their configured origins, even when a
+        # caller supplies a malformed suffix. Redirects never carry credentials.
+        parsed = urllib.parse.urlsplit(url)
+        if (parsed.scheme != "https" or parsed.username or parsed.password or parsed.fragment
+                or any(c in url for c in "\r\n\\")
+                or parsed.netloc not in ("api.cloudinary.com", "res.cloudinary.com", PROJECT_REF + ".supabase.co")
+                or type(maximum) is not int or not 0 < maximum <= MAX_OBJECT_BYTES
+                or method not in ("GET", "POST")):
+            raise MediaError("invalid_request_boundary")
+        if parsed.netloc == "api.cloudinary.com":
+            if method != "GET" or not parsed.path.startswith("/v1_1/" + self.cloud + "/"):
+                raise MediaError("invalid_request_boundary")
+            allowed_auth = self.cloud_auth
+        elif parsed.netloc == "res.cloudinary.com":
+            validate_media_url(url, self.cloud)
+            if method != "GET" or any(key.lower() in ("authorization", "apikey") for key in headers):
+                raise MediaError("invalid_request_boundary")
+            allowed_auth = None
+        else:
+            allowed_auth = "Bearer " + self.supabase_key
+        for key, value in headers.items():
+            if key.lower() == "authorization" and value != allowed_auth:
+                raise MediaError("invalid_request_boundary")
+            if key.lower() == "apikey" and (parsed.netloc != PROJECT_REF + ".supabase.co" or value != self.supabase_key):
+                raise MediaError("invalid_request_boundary")
         try:
             request = urllib.request.Request(url, method=method, headers=headers, data=data)
             with self.opener.open(request, timeout=30) as response:
@@ -100,20 +125,41 @@ class Reader:
         except MediaError:
             raise
         except urllib.error.HTTPError as exc:
+            # Storage may return a legacy HTTP 400 with a logical 404. Inspect
+            # only a bounded body, retain no payload, and recognize one exact
+            # missing-object form; tenant/bucket/auth failures remain failures.
+            if parsed.netloc == PROJECT_REF + ".supabase.co" and parsed.path.startswith("/storage/v1/object/authenticated/"):
+                try:
+                    error_raw = exc.read(8193)
+                    value = json.loads(error_raw) if len(error_raw) <= 8192 else None
+                    if isinstance(value, dict) and (
+                        (exc.code == 404 and value.get("code") == "NoSuchKey") or
+                        (exc.code in (400, 404) and str(value.get("statusCode")) == "404"
+                         and value.get("error") == "not_found" and value.get("message") == "Object not found")
+                    ):
+                        raise MediaError("storage_object_missing", 404) from None
+                except MediaError:
+                    raise
+                except Exception:
+                    pass
             raise MediaError("provider_http_error", exc.code) from None
         except Exception:
             raise MediaError("request_failed") from None
 
-    def admin(self, path, params=None, units=1):
+    def admin(self, path, params=None, units=1, maximum=MAX_JSON_BYTES):
+        if type(units) is not int or units <= 0:
+            raise MediaError("invalid_admin_units")
+        if type(maximum) is not int or not 0 < maximum <= MAX_JSON_BYTES:
+            raise MediaError("invalid_admin_response_limit")
         if self.admin_units + units > self.admin_unit_limit:
             raise MediaError("admin_budget_reached")
-        if not re.fullmatch(r"(?:usage|resources/(?:image|video|raw|search)|resources/(?:image|video|raw)/[A-Za-z_]+/.+|transformations(?:/.+)?)", path):
+        if not re.fullmatch(r"(?:usage|resources/(?:image|video|raw|search|by_asset_ids)|resources/[0-9a-fA-F]{32}|resources/(?:image|video|raw)/[A-Za-z_]+/.+|transformations(?:/.+)?)", path):
             raise MediaError("invalid_admin_path")
         self.admin_units += units
         url = "https://api.cloudinary.com/v1_1/" + self.cloud + "/" + path
         if params:
             url += "?" + urllib.parse.urlencode(params, doseq=True)
-        raw = self.request(url, {"Authorization": self.cloud_auth, "Accept": "application/json"})
+        raw = self.request(url, {"Authorization": self.cloud_auth, "Accept": "application/json"}, maximum=maximum)
         return decode_json(raw)
 
     def database(self, table, after=None):

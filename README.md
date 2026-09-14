@@ -60,23 +60,24 @@ variant lookup can be diagnosed without repeating the original asset inventory.
 
 Manifest validation: `python -m unittest discover -s tests/maintenance -p test_stylesnap_media.py -v`.
 
-The manual **Media identity metadata probe** checks the archive worker's exact
-`by_asset_ids` field selection before any copy is enabled. It samples at most ten
-images and makes at most three metadata-only Admin API requests, with 64 KiB
-response limits, no pagination or retries. Both fresh identity reads must return
-ETags and match each other and the sampled identity. Only aggregate counts and
-fixed failure codes are reported. It needs only the existing Cloudinary secrets;
-it downloads no media and makes no database or Storage requests. Passing this
-sample does not establish full-inventory consistency or migration capacity.
+The manual **Media identity metadata probe** checks source identity endpoints
+before any copy is enabled. It makes at most three metadata-only Admin API
+requests, with 64 KiB response limits, no pagination or retries. Both fresh
+identity reads must return ETags and match each other and the sampled identity.
+Only aggregate counts and fixed failure codes are reported. It needs only the
+existing Cloudinary secrets; it downloads no media and makes no database or
+Storage requests. Passing a sample does not establish full-inventory consistency
+or migration capacity.
 
 The first `batch_fields` probe stopped after two requests because the provider
 omitted ETags even when requested. The default `asset_metadata` mode instead
 samples one image and reads that asset twice using the documented asset-detail
 endpoint with `image_metadata=true`. It keeps the same three-request and 64 KiB
 response bounds, and retains no returned EXIF or other private metadata. Neither
-mode falls back to another endpoint automatically. Asset-detail availability
-still requires live verification, and any archive worker change must account
-for one Admin request per asset per identity check.
+mode falls back to another endpoint automatically. The asset-detail probe passed
+live with one stable ETag, three requests and 3,167 response bytes. The archive
+adapter uses that same query and response bound. See the [documented asset-detail
+parameters](https://cloudinary.com/documentation/admin_api#get_details_of_a_single_resource_by_asset_id).
 
 The separate **Encrypted media manifest export** workflow preserves that complete
 raw manifest for private review, including unresolved references and every source
@@ -93,6 +94,51 @@ Supabase, change references, or claim a consistent snapshot or completed migrati
 
 Encrypted export validation: `node --test tests/maintenance/stylesnap-manifest-envelope.test.mjs`
 and `python -m unittest discover -s tests/maintenance -p test_stylesnap_manifest_export.py -v`.
+The private archive coordinator remains disabled with no executable copy
+workflow. Originals use batches of at most 100 objects / 25 MB. Each original
+needs one asset-detail request before and after transfer: up to 200 requests,
+within the unchanged 200-unit shared Reader ceiling. Both passes must fit the
+remaining allowance before the first request. Responses are capped at 64 KiB;
+failed provider reads end that attempt without a retry or counter reset.
+Variant batches use at most 88 objects / 25 MB, reserving up to 12 units per
+derived inventory scan as well as both parent-identity checks. Its planner includes
+every inventoried original and materialized variant, the complete private source
+manifest, and immutable checkpoints. It reconstructs URL mappings from retained
+database reference rows and checks provider byte totals. The two absent legacy
+defaults require an exact manifest-bound review and raw membership check; their
+original URLs and unresolved statuses remain in provenance. Other missing
+references, unmaterialized variants and unplanned versions keep the plan incomplete.
+Private provenance uses one gzip member with separate raw and compressed SHA-256
+identities and byte counts: at most 32 MiB expanded per manifest and 8 MB stored
+per object. Bounded decoding rejects excess output, trailing members, truncation
+and corruption. Storage and bootstrap transfer reservations use compressed bytes;
+checkpoint recovery still reserves up to three 8 MB reads plus control overhead.
+The SQL control defaults to writes disabled, applies an 800 MB ceiling to shared
+organization Storage, and blocks unknown or stale storage/egress headroom. Crash
+recovery retains reservations and copies, charges new transfer attempts, and
+checks checkpoint bytes against the current durable pointer before resuming.
+Applying the schema, retaining a live manifest, copying media, and changing the
+application require the remaining source-parity, privacy and capacity checks.
+
+Archive validation: `python -m unittest discover -s tests/maintenance -p 'test_stylesnap_*.py' -v`.
+
+The derived-asset worker draft now retains complete parent provenance, verifies
+fresh identities before and after every batch, and persists variant checkpoints
+only after private read-back. A separate bounded source-content probe compares
+candidate delivery bytes with materialized variant bytes. Captured source
+metadata is never rewritten when ETags were omitted: fresh ETags must be present
+and stable, and their observed identity checksum is retained separately.
+The implementation passes 148 full maintenance tests, including bounded detail
+queries, paired budgets, failed-copy retention and smaller-batch resumption.
+The retained manifest gives 38 candidate variant associations and four
+thumbnail URLs without a materialized match; none is yet byte-parity proof.
+The actual compressed manifest and immutable checkpoint model reserve about
+594.72 MB Storage and at most 3.30 GB Supabase transfer. Corrected source accounting
+requires 15,748 original-identity units plus at most 66 variant-inventory/parent
+units before retries. The bounded source metadata responses could total up to
+1.24 GB; these are maximum responses, not observed traffic. Source API headroom,
+batch scheduling and monthly organization usage must be verified before copy.
+The complete plan remains ineligible while reference/parity gaps are unresolved.
 
 Clothing images now use a bundled placeholder for the two known missing legacy
 default URLs and failed image loads. Presentation leaves stored source URLs and

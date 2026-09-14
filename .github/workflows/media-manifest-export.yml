@@ -16,7 +16,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: stylesnap-private-media-manifest
+  # Live tools share one budget; offline checks must not cancel each other.
+  group: ${{ github.event_name == 'workflow_dispatch' && 'stylesnap-private-media-manifest' || format('stylesnap-media-validation-{0}-{1}', github.workflow, github.ref) }}
   cancel-in-progress: false
 
 jobs:

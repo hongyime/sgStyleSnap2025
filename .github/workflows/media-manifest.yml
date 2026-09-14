@@ -13,20 +13,23 @@ on:
   pull_request:
     paths:
       - .github/workflows/media-manifest.yml
-      - scripts/stylesnap_media.py
-      - tests/maintenance/test_stylesnap_media.py
+      - scripts/stylesnap_*.py
+      - tests/maintenance/test_stylesnap_*.py
+      - supabase/migrations/20260914045924_private_media_archive_control.sql
   push:
     branches: [main]
     paths:
       - .github/workflows/media-manifest.yml
-      - scripts/stylesnap_media.py
-      - tests/maintenance/test_stylesnap_media.py
+      - scripts/stylesnap_*.py
+      - tests/maintenance/test_stylesnap_*.py
+      - supabase/migrations/20260914045924_private_media_archive_control.sql
 
 permissions:
   contents: read
 
 concurrency:
-  group: stylesnap-private-media-manifest
+  # Live tools share one budget; offline checks must not cancel each other.
+  group: ${{ github.event_name == 'workflow_dispatch' && 'stylesnap-private-media-manifest' || format('stylesnap-media-validation-{0}-{1}', github.workflow, github.ref) }}
   cancel-in-progress: false
 
 jobs:
@@ -37,7 +40,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - run: python3 -m unittest discover -s tests/maintenance -p test_stylesnap_media.py -v
+      - run: python3 -m unittest discover -s tests/maintenance -v
 
   manifest:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
