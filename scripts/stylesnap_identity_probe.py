@@ -1,4 +1,4 @@
-"""Manual metadata-only canary for the archive worker's exact identity query."""
+"""Manual metadata-only canaries for archive source identity queries."""
 import base64
 import json
 import os
@@ -50,6 +50,10 @@ def collect(env, opener=None):
               "response_bytes": 0, "sample_count": 0, "metadata_stable": False,
               "media_downloads": 0, "database_requests": 0, "writes": 0}
     try:
+        mode = env.get("STYLESNAP_IDENTITY_MODE", "batch_fields")
+        if mode not in ("batch_fields", "asset_metadata"):
+            raise MediaError("invalid_probe_mode")
+        report["mode"] = mode
         cloud = env.get("VITE_CLOUDINARY_CLOUD_NAME", "").strip()
         key = env.get("CLOUDINARY_API_KEY", "").strip()
         secret = env.get("CLOUDINARY_API_SECRET", "").strip()
@@ -61,7 +65,8 @@ def collect(env, opener=None):
         opener = opener or urllib.request.build_opener(NoRedirects())
 
         def request(path, params):
-            if path not in ("resources/image", "resources/by_asset_ids") or report["request_count"] >= MAX_REQUESTS:
+            if (path not in ("resources/image", "resources/by_asset_ids")
+                    and not re.fullmatch(r"resources/[0-9a-fA-F]{32}", path)) or report["request_count"] >= MAX_REQUESTS:
                 raise MediaError("probe_request_boundary")
             report["request_count"] += 1
             url = "https://api.cloudinary.com/v1_1/" + cloud + "/" + path
@@ -76,14 +81,32 @@ def collect(env, opener=None):
                 return json.loads(raw)
 
         # One page is intentionally a sample. Do not follow its pagination cursor.
-        sampled = identities(request("resources/image", {"max_results": 10,
+        sample_limit = 1 if mode == "asset_metadata" else 10
+        sampled = identities(request("resources/image", {"max_results": sample_limit,
                              "fields": ",".join(FIELDS[:-1])}), require_etag=False)
+        if len(sampled) > sample_limit:
+            raise MediaError("invalid_identity_response")
         report["sample_count"] = len(sampled)
-        query = {"asset_ids[]": list(sampled), "fields": ",".join(FIELDS)}
-        before = identities(request("resources/by_asset_ids", query), sampled)
+        if mode == "asset_metadata":
+            asset_id = next(iter(sampled))
+            if not re.fullmatch(r"[0-9a-fA-F]{32}", asset_id):
+                raise MediaError("unsupported_detail_asset_id")
+            path, query = "resources/" + asset_id, {"image_metadata": "true", "max_results": 1}
+        else:
+            path, query = "resources/by_asset_ids", {"asset_ids[]": list(sampled), "fields": ",".join(FIELDS)}
+
+        def fresh():
+            value = request(path, query)
+            if mode == "asset_metadata":
+                # Derived pagination is intentionally irrelevant to an original
+                # identity read; the complete derived inventory is a separate gate.
+                value = {"resources": [value]}
+            return identities(value, sampled)
+
+        before = fresh()
         if {key: {field: row[field] for field in FIELDS[:-1]} for key, row in before.items()} != sampled:
             raise MediaError("source_changed_during_probe")
-        after = identities(request("resources/by_asset_ids", query), sampled)
+        after = fresh()
         if before != after:
             raise MediaError("source_changed_during_probe")
         report.update(status="ok", metadata_stable=True, etag_count=len(before))

@@ -1,1 +1,2 @@
 - 2026-09-14: Added a manual metadata-only identity probe because the retained inventory omits ETags; verify provider field availability before enabling the private copy worker. Preserve all source records and stay on Free plans.
+- 2026-09-14: The live batch-field probe confirmed that ETags are omitted. Added an explicit single-asset metadata mode using the documented detail endpoint; keep the same three-request bound and do not retry or copy media automatically.

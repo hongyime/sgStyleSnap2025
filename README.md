@@ -69,6 +69,15 @@ fixed failure codes are reported. It needs only the existing Cloudinary secrets;
 it downloads no media and makes no database or Storage requests. Passing this
 sample does not establish full-inventory consistency or migration capacity.
 
+The first `batch_fields` probe stopped after two requests because the provider
+omitted ETags even when requested. The default `asset_metadata` mode instead
+samples one image and reads that asset twice using the documented asset-detail
+endpoint with `image_metadata=true`. It keeps the same three-request and 64 KiB
+response bounds, and retains no returned EXIF or other private metadata. Neither
+mode falls back to another endpoint automatically. Asset-detail availability
+still requires live verification, and any archive worker change must account
+for one Admin request per asset per identity check.
+
 The separate **Encrypted media manifest export** workflow preserves that complete
 raw manifest for private review, including unresolved references and every source
 metadata field. It encrypts the canonical bytes in memory with a fresh AES-256-GCM

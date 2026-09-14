@@ -29,6 +29,41 @@ class Opener:
 
 
 class IdentityProbeTests(unittest.TestCase):
+    def test_documented_asset_metadata_mode_uses_only_one_asset_and_three_reads(self):
+        row = {**ROW, "asset_id": "a" * 32}
+        def response(number, request):
+            url = urllib.parse.urlsplit(request.full_url)
+            query = urllib.parse.parse_qs(url.query)
+            if number == 1:
+                self.assertEqual(query["max_results"], ["1"])
+                return {"resources": [row], "next_cursor": PRIVATE}
+            self.assertEqual(url.path, "/v1_1/unit-cloud/resources/" + row["asset_id"])
+            self.assertEqual(query, {"image_metadata": ["true"], "max_results": ["1"]})
+            return {**row, "image_metadata": {"private": PRIVATE}, "derived_next_cursor": PRIVATE}
+        opener = Opener(response)
+        result = probe.collect({**ENV, "STYLESNAP_IDENTITY_MODE": "asset_metadata"}, opener)
+        self.assertEqual((result["status"], result["sample_count"], result["request_count"], result["etag_count"]), ("ok", 1, 3, 1))
+        self.assertNotIn(PRIVATE, json.dumps(result))
+
+    def test_detail_changed_etag_wrong_id_and_missing_fields_fail_without_fallback(self):
+        row = {**ROW, "asset_id": "a" * 32}
+        for replacement, expected in (({**row, "etag": "changed"}, "source_changed_during_probe"),
+                                      ({**row, "asset_id": "b" * 32}, "incomplete_identity_response"),
+                                      ({key: value for key, value in row.items() if key != "etag"}, "etag_unavailable")):
+            opener = Opener(lambda n, req: {"resources": [row]} if n == 1 else (row if n == 2 else replacement))
+            result = probe.collect({**ENV, "STYLESNAP_IDENTITY_MODE": "asset_metadata"}, opener)
+            self.assertEqual((result["failure_code"], result["request_count"]), (expected, 3))
+            self.assertNotIn(PRIVATE, json.dumps(result))
+
+    def test_detail_sample_overflow_unsafe_id_and_unknown_mode_stop_early(self):
+        for rows in ([ROW], [{**ROW, "asset_id": "../unsafe"}], [ROW, ROW]):
+            opener = Opener(lambda n, req: {"resources": rows})
+            result = probe.collect({**ENV, "STYLESNAP_IDENTITY_MODE": "asset_metadata"}, opener)
+            self.assertEqual((result["status"], result["request_count"]), ("error", 1))
+        opener = Opener(lambda n, req: self.fail("Unknown mode made a request"))
+        result = probe.collect({**ENV, "STYLESNAP_IDENTITY_MODE": "unknown"}, opener)
+        self.assertEqual((result["failure_code"], result["request_count"]), ("invalid_probe_mode", 0))
+
     def run_probe(self, handler):
         opener = Opener(handler)
         result = probe.collect(ENV, opener)
