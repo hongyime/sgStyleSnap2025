@@ -13,7 +13,7 @@ const binding = {
   object_path: `sha256/${sha.slice(0, 2)}/${sha}`, content_bytes: content.length, mime_type: 'image/png',
 };
 
-function fixture({ rows = [binding], bytes = content, status = 200, stream, metadataError = false } = {}) {
+function fixture({ rows = [binding], bytes = content, status = 200, stream, metadataError = false, metadataStatus = 200, metadataNetworkError = false } = {}) {
   const calls = [];
   const client = createClient('https://fixture.supabase.co', 'synthetic-publishable-key', {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
@@ -22,7 +22,8 @@ function fixture({ rows = [binding], bytes = content, status = 200, stream, meta
       assert.equal(parsed.origin, 'https://fixture.supabase.co');
       calls.push({ path: parsed.pathname, query: parsed.searchParams, options });
       if (parsed.pathname === '/rest/v1/stylesnap_media_bindings') {
-        return new Response(JSON.stringify(metadataError ? { message: 'denied' } : rows), { status: metadataError ? 403 : 200, headers: { 'Content-Type': 'application/json' } });
+        if (metadataNetworkError) throw new TypeError('Synthetic network failure');
+        return new Response(JSON.stringify(metadataError || metadataStatus !== 200 ? { message: 'unavailable' } : rows), { status: metadataError ? 403 : metadataStatus, headers: { 'Content-Type': 'application/json', 'Retry-After': '0' } });
       }
       assert.equal(parsed.pathname, `/storage/v1/object/stylesnap-media-archive/${binding.object_path}`);
       assert.equal(parsed.search, '');
@@ -46,6 +47,14 @@ test('real Supabase SDK reads one RLS binding and streams the exact verified ima
 
 for (const options of [{ rows: [] }, { metadataError: true }]) {
   test(`missing or forbidden binding stops before Storage (${JSON.stringify(options)})`, async () => {
+    const { client, calls } = fixture(options);
+    await assert.rejects(() => readPrivateMedia(client, reference), { code: 'media_unavailable' });
+    assert.equal(calls.length, 1);
+  });
+}
+
+for (const options of [{ metadataStatus: 520 }, { metadataNetworkError: true }]) {
+  test(`transient metadata failure makes exactly one request (${JSON.stringify(options)})`, async () => {
     const { client, calls } = fixture(options);
     await assert.rejects(() => readPrivateMedia(client, reference), { code: 'media_unavailable' });
     assert.equal(calls.length, 1);

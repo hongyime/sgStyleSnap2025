@@ -133,6 +133,8 @@ No new delivery schema has been applied and no bucket has been created.
 `readPrivateMedia` uses the caller's Supabase client to check one binding and
 stream one object, with a deadline and the recorded byte limit. It checks the
 SHA-256 before returning an image Blob, and never falls back to the source URL.
+The metadata query explicitly disables the SDK's default retries, so a network
+failure or HTTP 520 ends after one attempt instead of issuing four requests.
 It uses no Vercel proxy, paid transformation, signed URL or shared result cache.
 Application integration must bound simultaneous readers and revoke object URLs
 when records, sessions or views change. Binding generation from verified copy

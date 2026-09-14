@@ -13,3 +13,7 @@
 
 - 2026-09-14: PR #134 and its one manual detail probe are verified in production; the original checkout was fast-forwarded while preserving existing edits. The disabled bulk adapter still needs the verified detail query and an explicit per-asset request budget. Keep every retained record.
 - 2026-09-14: PR #135 is released at a5166348 after 148 hosted Python tests, seven encryption tests and 14 browser smoke tests. Vercel production is READY and both public aliases pass anonymous navigation. Preserve the unapplied archive migration and disabled copy gates; current usage and full media parity remain open.
+
+2026-09-14: PR #136 is released at 0eec9655 after all 13 PR checks, 41 new tests, 76 existing unit tests and 14 browser smoke tests. Both production aliases pass anonymous navigation. The original checkout and prior notes are reconciled; local configuration and all retained media remain unchanged. Delivery SQL remains unapplied and views/uploads are not cut over.
+
+2026-09-14: A final SDK review found that metadata GETs retry HTTP 520 and network failures by default. Both synthetic cases made four requests; explicitly disable SDK retries in the private reader and require one-attempt regression tests before activation.
