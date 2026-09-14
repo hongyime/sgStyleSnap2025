@@ -31,7 +31,7 @@ PR #137 is released at 1bed9a2a. All 14 PR checks and six main workflows pass;
 Vercel production is READY and both public aliases pass anonymous navigation.
 The reader remains inactive and delivery SQL unapplied.
 
-Current branch: feat/private-media-integration. Verified source-field planning
+PR #138 is released at b8f0dedb. Verified source-field planning
 and bounded publication are implemented. Complete original/variant checkpoints
 and explicit delivery-byte proofs are required; missing and external references
 remain in the private plan. The plan reserves additional storage explicitly,
@@ -46,3 +46,26 @@ and 14 browser smoke checks pass. No new SQL, bucket, copy
 or live reader has been activated. Next: finish validation and source review,
 then connect all image views and private uploads. Fresh quota, full byte parity,
 hosted privacy, source-delta and rollback checks still gate the live cutover.
+
+Current branch: feat/private-media-views. Thirty clothing/avatar presentation
+sites now pass exact source-row identities to a shared private reader, behind
+VITE_PRIVATE_MEDIA_ENABLED=false. The loader bounds active and queued reads,
+shares mounted views, and revokes URLs on unmount, offscreen/hidden views and
+session changes. Private failures use local placeholders and suppress legacy
+avatar error callbacks that could restore provider URLs. Canvas copies need
+original IDs for both clothes and catalog rows; a regression caught the latter.
+All 96 unit cases (including 20 new loader/component cases), 67 media access
+checks, type checking and the production build pass locally. Ten real-SDK
+desktop/mobile browser cases and all 14 existing application smoke cases pass. Browser regression caught an explicit
+sign-out after an initially empty session; it now always invalidates the loader.
+Hosted review and production capacity remain to be checked.
+
+This presentation change does not complete the migration. Programmatic scoring
+and try-on still use source URLs, and uploads still use Cloudinary. The scoring
+host currently responds "Service Suspended", so its private-byte API contract
+cannot yet be verified. Private uploads require trusted byte verification,
+capacity/ownership checks and atomic source/binding publication. Preserve both
+original input and processed variants. Do not enable the build flag or live
+delivery until those paths, all retained bytes, hosted permissions, quota,
+source delta and rollback are verified. No live SQL, bucket or media transfer
+was performed during this presentation work.

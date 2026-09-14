@@ -1,0 +1,12 @@
+{
+  "task": "Connect all media views and private uploads for the accepted Supabase migration",
+  "branch": "feat/private-media-views",
+  "baseline": "b8f0dedbb002b5d160540a9d361965ce51b13eff",
+  "stage": "Presentation implemented and local checks passing; uploads and programmatic image consumers remain unfinished",
+  "local_validation": {"unit_tests": 96, "new_loader_component_tests": 20, "media_access_tests": 67, "private_browser_tests": 10, "app_smoke_tests": 14, "type_check": "pass", "build": "pass"},
+  "regressions": ["Three private-mode cases failed against the old ClothingImage", "Catalog canvas copies initially resolved to a display ID; originalId now identifies their catalog row", "Both browser viewports exposed explicit sign-out with an empty initial session retaining images; SIGNED_OUT now always invalidates"],
+  "remaining": ["Finish programmatic scoring and try-on private-byte handling", "Scoring host reports Service Suspended; verify its transport contract when available", "Implement trusted private uploads, retaining original and processed files with atomic publication and capacity guards", "Run hosted source checks and release only after required validation", "Keep live read/copy/upload gates disabled until complete byte parity, hosted privacy, fresh quota, source delta and rollback checks pass"],
+  "findings": ["ClothingImage currently receives only a URL and bypasses the prepared private reader", "Avatars use direct/proxied URLs in several views", "Outfit canvas copies need the original clothing ID, not their display-instance ID", "Private bindings and source-row RLS exist in prepared SQL, but live SQL/copy/read activation remain disabled"],
+  "plan": ["Reproduce private-mode provider fallback with a component fixture", "Use explicit row/column references in every persisted-media view", "Bound concurrent downloads and retained object URLs; cancel stale work and invalidate on session changes", "Connect the private upload path and validate permission, byte/parity and retention behavior", "Run app, browser and hosted checks before release; preserve Free build-capacity and live migration gates"],
+  "constraints": ["Preserve raw checkout edits", "No live data writes or uploads for tests", "No private-image failure may fall back to the old provider", "Retain every original and source mapping", "Keep runtime activation gated by verified migration and quota"]
+}

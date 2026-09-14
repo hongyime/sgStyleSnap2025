@@ -131,7 +131,7 @@
         <!-- Item Image -->
         <div :class="`aspect-square bg-stone-100 dark:bg-zinc-800`">
           <ClothingImage
-            :src="item.image_url"
+            :record="item" table="catalog_items" :src="item.image_url"
             :alt="item.name"
             class="w-full h-full object-cover"
           />

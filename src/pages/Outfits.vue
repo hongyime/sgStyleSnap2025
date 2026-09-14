@@ -325,7 +325,7 @@
                 <div class="aspect-square relative">
                   <ClothingImage
                     v-if="outfitItem.clothing_item?.image_url"
-                    :src="outfitItem.clothing_item.image_url"
+                    :record="outfitItem.clothing_item" table="clothes" :src="outfitItem.clothing_item.image_url"
                     :alt="outfitItem.clothing_item.name"
                     class="w-full h-full object-cover"
                   />

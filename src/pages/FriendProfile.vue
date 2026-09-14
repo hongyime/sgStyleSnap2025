@@ -25,7 +25,7 @@
           <div class="hidden md:flex items-center justify-between gap-4">
             <div class="flex items-center gap-4">
               <div class="w-16 h-16 rounded-full overflow-hidden bg-stone-100 dark:bg-zinc-800">
-                <img v-if="proxiedAvatarUrl" :src="proxiedAvatarUrl" :alt="friend?.name" class="w-full h-full object-cover" crossorigin="anonymous" @error="handleImageError" />
+                <MediaImage v-if="proxiedAvatarUrl" :record="friend" table="users" :source-url="friend?.avatar_url || ''" fallback="/images/avatar-placeholder.svg" :src="proxiedAvatarUrl" :alt="friend?.name" class="w-full h-full object-cover" crossorigin="anonymous" @error="handleImageError" />
                 <div v-else class="w-full h-full flex items-center justify-center bg-stone-200 dark:bg-zinc-700">
                   <span class="text-xl font-bold text-stone-500 dark:text-zinc-400">{{ initial }}</span>
                 </div>
@@ -53,7 +53,7 @@
           <!-- Mobile Layout - Centered -->
           <div class="md:hidden flex flex-col items-center text-center space-y-4">
             <div class="w-20 h-20 rounded-full overflow-hidden bg-stone-100 dark:bg-zinc-800">
-              <img v-if="proxiedAvatarUrl" :src="proxiedAvatarUrl" :alt="friend?.name" class="w-full h-full object-cover" crossorigin="anonymous" @error="handleImageError" />
+              <MediaImage v-if="proxiedAvatarUrl" :record="friend" table="users" :source-url="friend?.avatar_url || ''" fallback="/images/avatar-placeholder.svg" :src="proxiedAvatarUrl" :alt="friend?.name" class="w-full h-full object-cover" crossorigin="anonymous" @error="handleImageError" />
               <div v-else class="w-full h-full flex items-center justify-center bg-stone-200 dark:bg-zinc-700">
                 <span class="text-2xl font-bold text-stone-500 dark:text-zinc-400">{{ initial }}</span>
               </div>
@@ -218,7 +218,7 @@
               @click="openItemDetails(item)"
               class="rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:scale-105 bg-white border border-stone-200 dark:bg-zinc-900 dark:border-zinc-800">
               <div class="aspect-square bg-stone-100 dark:bg-zinc-800 overflow-hidden">
-                <ClothingImage :src="item.image_url || item.thumbnail_url" :alt="item.name" class="w-full h-full object-cover" />
+                <ClothingImage :record="item" table="clothes" :src="item.image_url || item.thumbnail_url" :alt="item.name" class="w-full h-full object-cover" />
               </div>
               <div class="p-3">
                 <p class="text-sm font-medium truncate text-black dark:text-white">{{ item.name }}</p>
@@ -304,7 +304,7 @@
               <div class="w-full md:w-1/2 h-[200px] sm:h-[250px] md:h-auto md:min-h-[600px] md:max-h-[60vh] relative overflow-hidden bg-stone-100 dark:bg-zinc-800 flex-shrink-0 flex items-center justify-center">
                 <ClothingImage
                   v-if="selectedItem?.image_url"
-                  :src="selectedItem.image_url"
+                  :record="selectedItem" table="clothes" :src="selectedItem.image_url"
                   :alt="selectedItem.name"
                   class="w-full h-full object-contain"
                 />
@@ -431,6 +431,7 @@
 </template>
 
 <script setup>
+import MediaImage from '@/components/ui/MediaImage.vue'
 import ClothingImage from '@/components/ui/ClothingImage.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'

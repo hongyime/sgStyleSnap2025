@@ -79,9 +79,9 @@
           >
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-full overflow-hidden bg-stone-200 dark:bg-zinc-700">
-                <img
+                <MediaImage
                   v-if="user.avatar_url"
-                  :src="getProxiedImageUrl(user.avatar_url)"
+                  :record="user" table="users" :source-url="user?.avatar_url || ''" fallback="/images/avatar-placeholder.svg" :src="getProxiedImageUrl(user.avatar_url)"
                   :alt="user.name"
                   class="w-full h-full object-cover"
                 />
@@ -123,6 +123,7 @@
 </template>
 
 <script setup>
+import MediaImage from '@/components/ui/MediaImage.vue'
 import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import { usePopup } from '@/composables/usePopup'

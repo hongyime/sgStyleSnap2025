@@ -25,9 +25,9 @@
               <!-- Profile Photo -->
               <div class="text-center">
                 <div class="w-32 h-32 mx-auto rounded-full overflow-hidden mb-4 border-2 bg-stone-100 border-stone-300 dark:bg-zinc-800 dark:border-zinc-700">
-                  <img
+                  <MediaImage
                     v-if="avatarUrl"
-                    :src="avatarUrl"
+                    :record="user" table="users" :source-url="user?.avatar_url || ''" fallback="/images/avatar-placeholder.svg" :src="avatarUrl"
                     :alt="user.name || user.user_metadata?.name || 'User'"
                     class="w-full h-full object-cover"
                     crossorigin="anonymous"
@@ -300,6 +300,7 @@
 </template>
 
 <script setup>
+import MediaImage from '@/components/ui/MediaImage.vue'
 /**
  * Profile.vue - User Profile Page Component
  * 

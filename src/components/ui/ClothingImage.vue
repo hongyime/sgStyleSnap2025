@@ -1,18 +1,11 @@
 <template>
-  <img :src="displaySource" @error="handleError" />
+  <MediaImage :src="src" :record="record" :table="table" :source-url="sourceUrl" />
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
-import { CLOTHING_PLACEHOLDER_URL, clothingImageUrl } from '@/utils/clothing-image'
-
-const props = defineProps({ src: { type: String, default: '' } })
-const failed = ref(false)
-const displaySource = computed(() => failed.value ? CLOTHING_PLACEHOLDER_URL : clothingImageUrl(props.src))
-watch(() => props.src, () => { failed.value = false })
-
-function handleError() {
-  // A failed local fallback does not trigger another URL change or retry loop.
-  failed.value = true
-}
+import MediaImage from './MediaImage.vue'
+defineProps({
+  src: { type: String, default: '' }, record: { type: Object, default: null },
+  table: { type: String, default: 'clothes' }, sourceUrl: { type: String, default: '' },
+})
 </script>

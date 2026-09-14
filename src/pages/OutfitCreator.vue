@@ -390,9 +390,9 @@
           <div class="flex items-center gap-4">
             <!-- Friend Avatar -->
             <div class="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 bg-stone-100 dark:bg-zinc-800">
-              <img
+              <MediaImage
                 v-if="friend.avatar_url"
-                :src="getProxiedImageUrl(friend.avatar_url)"
+                :record="friend" table="users" :source-url="friend?.avatar_url || ''" fallback="/images/avatar-placeholder.svg" :src="getProxiedImageUrl(friend.avatar_url)"
                 :alt="friend.username"
                 class="w-full h-full object-cover"
                 crossorigin="anonymous"
@@ -502,7 +502,7 @@
                       <div class="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 shadow-sm bg-white dark:bg-zinc-900">
                         <ClothingImage
                           v-if="item.image_url"
-                          :src="item.image_url"
+                          :record="item" table="clothes" :src="item.image_url"
                           :alt="item.name"
                           class="w-full h-full object-cover"
                           draggable="false"
@@ -612,7 +612,7 @@
                 <div class="w-32 h-32 overflow-hidden">
                   <ClothingImage
                     v-if="item.image_url"
-                    :src="item.image_url"
+                    :record="item" table="clothes" :src="item.image_url"
                     :alt="item.name"
                     class="w-full h-full object-contain"
                     draggable="false"
@@ -967,7 +967,7 @@
                   class="aspect-square rounded-lg overflow-hidden bg-stone-100 dark:bg-zinc-800"
                 >
                   <ClothingImage
-                    :src="item.image_url || item.thumbnail_url"
+                    :record="item" table="clothes" :src="item.image_url || item.thumbnail_url"
                     :alt="item.name"
                     class="w-full h-full object-cover"
                   />
@@ -1084,7 +1084,7 @@
                 >
                   <div class="aspect-square relative overflow-hidden">
                     <ClothingImage
-                      :src="item.image_url || item.thumbnail_url"
+                      :record="item" table="clothes" :src="item.image_url || item.thumbnail_url"
                       :alt="item.name"
                       class="w-full h-full object-cover"
                     />
@@ -1147,6 +1147,7 @@
 </template>
 
 <script setup>
+import MediaImage from '@/components/ui/MediaImage.vue'
 import ClothingImage from '@/components/ui/ClothingImage.vue'
 import { ref, computed, onMounted, onUnmounted, watch, reactive, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'

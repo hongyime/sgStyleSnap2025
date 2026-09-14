@@ -130,9 +130,9 @@
             <div class="flex items-center gap-4 md:block">
               <!-- Avatar -->
               <div class="w-12 h-12 md:w-16 md:h-16 md:mx-auto rounded-full overflow-hidden bg-stone-100 dark:bg-zinc-800">
-                <img
+                <MediaImage
                   v-if="friend.avatar_url"
-                  :src="getProxiedImageUrl(friend.avatar_url)"
+                  :record="friend" table="users" :source-url="friend?.avatar_url || ''" fallback="/images/avatar-placeholder.svg" :src="getProxiedImageUrl(friend.avatar_url)"
                   :alt="friend.name"
                   class="w-full h-full object-cover"
                   crossorigin="anonymous"
@@ -187,9 +187,9 @@
               <div class="flex items-center gap-4">
                 <!-- Avatar -->
                 <div class="w-12 h-12 md:w-12 md:h-12 rounded-full overflow-hidden bg-stone-100 dark:bg-zinc-800">
-                  <img
+                  <MediaImage
                     v-if="request.requester?.avatar_url"
-                    :src="getProxiedImageUrl(request.requester.avatar_url)"
+                    :record="request.requester" table="users" :source-url="request.requester?.avatar_url || ''" fallback="/images/avatar-placeholder.svg" :src="getProxiedImageUrl(request.requester.avatar_url)"
                     :alt="request.requester.name"
                     class="w-full h-full object-cover"
                     crossorigin="anonymous"
@@ -262,9 +262,9 @@
               <div class="flex items-center gap-4">
                 <!-- Avatar -->
                 <div class="w-12 h-12 md:w-12 md:h-12 rounded-full overflow-hidden bg-stone-100 dark:bg-zinc-800">
-                  <img
+                  <MediaImage
                     v-if="request.receiver?.avatar_url"
-                    :src="getProxiedImageUrl(request.receiver.avatar_url)"
+                    :record="request.receiver" table="users" :source-url="request.receiver?.avatar_url || ''" fallback="/images/avatar-placeholder.svg" :src="getProxiedImageUrl(request.receiver.avatar_url)"
                     :alt="request.receiver.name"
                     class="w-full h-full object-cover"
                     crossorigin="anonymous"
@@ -379,9 +379,9 @@
               >
                 <div class="flex items-center gap-3">
                   <div class="w-8 h-8 rounded-full overflow-hidden bg-stone-200 dark:bg-zinc-700">
-                    <img
+                    <MediaImage
                       v-if="user.avatar_url"
-                      :src="getProxiedImageUrl(user.avatar_url)"
+                      :record="user" table="users" :source-url="user?.avatar_url || ''" fallback="/images/avatar-placeholder.svg" :src="getProxiedImageUrl(user.avatar_url)"
                       :alt="user.name"
                       class="w-full h-full object-cover"
                       crossorigin="anonymous"
@@ -440,6 +440,7 @@
 </template>
 
 <script setup>
+import MediaImage from '@/components/ui/MediaImage.vue'
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'

@@ -311,7 +311,7 @@
                     <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden flex-shrink-0 shadow-sm bg-white">
                       <ClothingImage
                         v-if="item.image_url || item.thumbnail_url"
-                        :src="item.thumbnail_url || item.image_url"
+                        :record="item" table="catalog_items" :src="item.thumbnail_url || item.image_url"
                         :alt="item.name"
                         class="w-full h-full object-cover"
                         loading="lazy"
@@ -412,7 +412,7 @@
                   <div class="w-32 h-32 overflow-hidden">
                     <ClothingImage
                       v-if="item.image_url || item.thumbnail_url"
-                      :src="item.thumbnail_url || item.image_url"
+                      :record="item" table="catalog_items" :src="item.thumbnail_url || item.image_url"
                       :alt="item.name"
                       class="w-full h-full object-contain"
                       loading="lazy"
