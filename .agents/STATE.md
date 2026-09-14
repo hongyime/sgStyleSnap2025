@@ -18,7 +18,8 @@ deadline cancellation, fresh permission checks and explicit retry suppression. E
 the production build pass. Source-table grants and RLS flags were also confirmed
 read-only. No live migrations, Storage requests or media transfers were run.
 
-The reader is not connected to views yet. Next: generate bindings from verified
+At PR #136 the reader was not connected to views. The later PR #139 connects them.
+Next: generate bindings from verified
 copy checkpoints, integrate readers with bounded concurrency and object-URL
 cleanup, finish private uploads and validate hosted Storage behavior. Monthly and
 source quota headroom, complete delivery parity and cutover remain open.
@@ -47,7 +48,7 @@ or live reader has been activated. Next: finish validation and source review,
 then connect all image views and private uploads. Fresh quota, full byte parity,
 hosted privacy, source-delta and rollback checks still gate the live cutover.
 
-Current branch: feat/private-media-views. Thirty clothing/avatar presentation
+PR #139 (feat/private-media-views) is released at 75d544c9. Thirty clothing/avatar presentation
 sites now pass exact source-row identities to a shared private reader, behind
 VITE_PRIVATE_MEDIA_ENABLED=false. The loader bounds active and queued reads,
 shares mounted views, and revokes URLs on unmount, offscreen/hidden views and
@@ -58,7 +59,8 @@ All 96 unit cases (including 20 new loader/component cases), 67 media access
 checks, type checking and the production build pass locally. Ten real-SDK
 desktop/mobile browser cases and all 14 existing application smoke cases pass. Browser regression caught an explicit
 sign-out after an initially empty session; it now always invalidates the loader.
-Hosted review and production capacity remain to be checked.
+All 14 PR checks and six main workflows passed. Production and preview are READY;
+nine public HTTP and two production browser checks passed. Private delivery is off.
 
 This presentation change does not complete the migration. Programmatic scoring
 and try-on still use source URLs, and uploads still use Cloudinary. The scoring
@@ -69,3 +71,30 @@ original input and processed variants. Do not enable the build flag or live
 delivery until those paths, all retained bytes, hosted permissions, quota,
 source delta and rollback are verified. No live SQL, bucket or media transfer
 was performed during this presentation work.
+
+Current branch: fix/retain-upload-drafts, following the repository's conventional
+branch/commit rules and main-targeted PR template. Live schema and trigger definitions
+were checked read-only. Two regressions reproduced selected-file upload failures
+becoming successful placeholder records; the service now rejects those failures
+without inserting. Three form regressions exposed discarded originals and
+submission during image processing. The forms now retain original/processed
+pairs for retry and prevent submission while processing. Update failures now keep
+the caller's files and prior URLs intact; SQL payloads exclude File objects.
+Recognition-error previews are bounded to one retained URL and released on
+replacement/unmount. A closed dialog ignores late image processing. Eleven
+focused cases and all 105 unit tests pass, as do type checking and the production
+build. This fix is awaiting hosted validation and release.
+
+This release fixes existing uploads; it does not persist originals to Supabase.
+Private Supabase upload implementation remains pending. The current binding
+key cannot retain image replacements in one active manifest. Publication must
+preserve prior versions, reserve capacity before network writes, verify stored
+bytes, and commit source rows plus bindings atomically. Existing catalog adoption
+and new OAuth avatars also need complete writer coverage before cutover.
+
+Live auto_contribute_to_catalog currently adds every upload to an active public
+anonymous catalog even when the clothing row is private/friends. This behavior
+needs an explicit choice in the owner HTML: keep existing anonymous contribution
+or limit it to public/opted-in items. Do not silently expose original files or
+change visibility of retained catalog records. Quota, parity, hosted privacy,
+rollback and programmatic AI transport still gate production migration.

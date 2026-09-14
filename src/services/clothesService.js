@@ -335,12 +335,9 @@ export class ClothesService {
             console.error('❌ ClothesService: File too large:', `${(clothesData.image_file?.size / 1024 / 1024).toFixed(2)}MB`)
             throw new Error('Image file is too large. Please select a file smaller than 10MB.')
           } else {
-            // Use a fallback image URL to satisfy the not-null constraint
-            console.warn('⚠️ ClothesService: Using fallback image due to upload failure')
-            imageData = {
-              secure_url: CLOTHING_PLACEHOLDER_URL,
-              thumbnail_url: CLOTHING_PLACEHOLDER_URL
-            }
+            // A selected file is required data. Keep the draft retryable and
+            // do not create an apparently successful item without its image.
+            throw new Error('Image upload failed. Please retry your selected file.')
           }
         }
       } else {
@@ -420,6 +417,12 @@ export class ClothesService {
       const { data: { user }, error: userError } = await supabase.auth.getUser()
       if (userError || !user) throw new Error('Not authenticated')
 
+      // Keep the caller's retryable draft intact even if the database rejects
+      // the update. Files belong to the upload step, never the SQL payload.
+      const updateData = { ...updates }
+      delete updateData.image_file
+      delete updateData.original_file
+
       // Handle image upload if provided
       if (updates.image_file) {
         const imageData = await cloudinary.uploadImage(updates.image_file, {
@@ -428,14 +431,13 @@ export class ClothesService {
           format: 'auto'
         })
         
-        updates.image_url = imageData.secure_url
-        updates.thumbnail_url = imageData.thumbnail_url
-        delete updates.image_file
+        updateData.image_url = imageData.secure_url
+        updateData.thumbnail_url = imageData.thumbnail_url
       }
 
       const { data, error } = await supabase
         .from('clothes')
-        .update(updates)
+        .update(updateData)
         .eq('id', id)
         .eq('owner_id', user.id) // Ensure user owns the item
         .select()

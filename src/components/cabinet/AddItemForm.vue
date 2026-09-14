@@ -75,6 +75,7 @@
             type="file"
             accept="image/*"
             @change="handleFileUpload"
+            :disabled="processingImage || uploading"
             class="file-input"
           />
           <button type="button" @click="$refs.fileInput.click()" class="file-button">
@@ -138,6 +139,8 @@ const emit = defineEmits(['close', 'itemAdded'])
 
 // State
 const uploading = ref(false)
+const processingImage = ref(false)
+let imageGeneration = 0
 const selectedFileName = ref('')
 const aiRecognitionStatus = ref(null)
 const clothesService = new ClothesService()
@@ -160,6 +163,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  imageGeneration++
   window.removeEventListener('resize', handleResize)
   window.removeEventListener('keydown', handleEsc)
 })
@@ -169,12 +173,13 @@ const formData = ref({
   name: '',
   category: '',
   brand: '',
+  original_file: null,
   image_file: null
 })
 
 // Computed
 const canSubmit = computed(() => {
-  return formData.value.name && 
+  return !processingImage.value && formData.value.name &&
          formData.value.category && 
          formData.value.image_file
 })
@@ -193,10 +198,9 @@ const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
 // Methods
 const handleFileUpload = async (event) => {
   const file = event.target.files?.[0];
-  if (!file) return;
-
-  selectedFileName.value = file.name;
-  formData.value.image_file = file;
+  if (!file || processingImage.value || uploading.value) return;
+  const generation = ++imageGeneration;
+  processingImage.value = true;
 
   aiRecognitionStatus.value = { type: 'loading', message: 'Analyzing image with AI...' };
 
@@ -211,19 +215,23 @@ const handleFileUpload = async (event) => {
     try {
       const blob = await removeBackground(file);
       fileForDetection = new File([blob], file.name.replace(/\.[^.]+$/, '') + '-nobg.png', { type: 'image/png' });
-      formData.value.image_file = fileForDetection;
     } catch (bgErr) {
       // Fallback
       console.warn('modern-rembg background removal failed, proceeding with original image:', bgErr);
       fileForDetection = file;
-      formData.value.image_file = file;
     }
+    if (generation !== imageGeneration) return;
+    selectedFileName.value = file.name;
+    formData.value.original_file = file;
+    formData.value.image_file = fileForDetection;
     // Try AI classification
     try {
       const classification = await classifyClothingItem(fileForDetection);
+      if (generation !== imageGeneration) return;
       if (classification.success) {
         formData.value.category = classification.styleSnapCategory || formData.value.category;
         await nextTick();
+        if (generation !== imageGeneration) return;
         aiRecognitionStatus.value = {
           type: 'success',
           message: `AI detected: ${classification.topPrediction} - Category set to ${classification.styleSnapCategory} (${Math.round(classification.confidence * 100)}% confidence)`
@@ -235,14 +243,18 @@ const handleFileUpload = async (event) => {
         };
       }
     } catch (aiError) {
+      if (generation !== imageGeneration) return;
       aiRecognitionStatus.value = {
         type: 'warning',
         message: 'AI service temporarily unavailable, please fill manually'
       };
     }
   } catch (error) {
+    if (generation !== imageGeneration) return;
     console.error('Error processing image:', error);
     aiRecognitionStatus.value = { type: 'error', message: 'Failed to process image. Please try again.' };
+  } finally {
+    if (generation === imageGeneration) processingImage.value = false;
   }
 };
 
@@ -260,6 +272,7 @@ const handleSubmit = async () => {
       privacy: 'private',
       is_favorite: false,
       style_tags: [],
+      original_file: formData.value.original_file,
       image_file: formData.value.image_file
     }
 
@@ -298,10 +311,13 @@ const handleSubmit = async () => {
 }
 
 const resetForm = () => {
+  imageGeneration++
+  processingImage.value = false
   formData.value = {
     name: '',
     category: '',
     brand: '',
+    original_file: null,
     image_file: null
   }
   selectedFileName.value = ''
@@ -311,6 +327,8 @@ const resetForm = () => {
 
 // Watch for dialog open/close to reset form
 watch(() => props.isOpen, (isOpen) => {
+  imageGeneration++
+  processingImage.value = false
   if (isOpen) {
     resetForm()
   }

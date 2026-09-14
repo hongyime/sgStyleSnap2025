@@ -12,6 +12,8 @@
             <button
               v-if="previewUrl"
               @click="clearImage"
+              :disabled="isSubmitting"
+              aria-label="Remove selected image"
               :class="`p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors flex-shrink-0`"
             >
               <X class="w-4 h-4" />
@@ -52,7 +54,7 @@
               accept="image/*"
               @change="handleFileUpload"
               class="hidden"
-              :disabled="uploading"
+              :disabled="uploading || isSubmitting"
             />
           </label>
         </div>
@@ -233,7 +235,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
 import { useSanitize } from '@/composables/useSanitize'
@@ -264,6 +266,14 @@ const uploading = ref(false)
 const isSubmitting = ref(false)
 const hasAttemptedSubmit = ref(false)
 const previewUrl = ref('')
+let imageGeneration = 0
+let failurePreviewUrl = ''
+
+const createFailurePreview = (file) => {
+  if (failurePreviewUrl) URL.revokeObjectURL(failurePreviewUrl)
+  failurePreviewUrl = URL.createObjectURL(file)
+  return failurePreviewUrl
+}
 const formData = ref({
   name: '',
   category: '',
@@ -272,6 +282,7 @@ const formData = ref({
   brand: '',
   privacy: 'friends', // Default to friends
   image_url: '',
+  original_file: null,
   image_file: null, // Store the actual file for upload
 })
 
@@ -339,7 +350,7 @@ const availableTypes = computed(() => {
 })
 
 const canSubmit = computed(() => {
-  return formData.value.name && 
+  return !uploading.value && formData.value.name &&
          formData.value.category && 
          formData.value.type && 
          formData.value.color && 
@@ -371,7 +382,8 @@ const onCategoryChange = () => {
 
 const handleFileUpload = async (e) => {
   const file = e.target.files?.[0]
-  if (!file) return
+  if (!file || uploading.value || isSubmitting.value) return
+  const generation = ++imageGeneration
 
   uploading.value = true
   try {
@@ -383,6 +395,7 @@ const handleFileUpload = async (e) => {
 
     // 1) Basic validation (type/size)
     const { validateImageForClassification, classifyClothingItem } = await import('@/services/fashion-rnn-service')
+    if (generation !== imageGeneration) return
     const validation = validateImageForClassification(file)
     if (!validation.isValid) {
       showError(validation.errors.join(', '))
@@ -399,13 +412,15 @@ const handleFileUpload = async (e) => {
       console.warn('modern-rembg background removal failed, proceeding with original image:', bgErr)
       processedFile = file
     }
+    if (generation !== imageGeneration) return
 
     // 3) AI classification (must pass to continue)
     try {
       const classification = await classifyClothingItem(processedFile)
+      if (generation !== imageGeneration) return
       if (!classification || !classification.success) {
         // Show the processed image (background removed) in error popup
-        const processedImageUrl = URL.createObjectURL(processedFile)
+        const processedImageUrl = createFailurePreview(processedFile)
         showError(
           classification?.error || 'AI recognition failed. Please try another image.',
           'AI Recognition Failed',
@@ -418,14 +433,13 @@ const handleFileUpload = async (e) => {
       if (confidence < 0.7) {
         const pct = Math.round(confidence * 100)
         // Create blob URL for the processed image (background removed) to show in error popup
-        const processedImageUrl = URL.createObjectURL(processedFile)
+        const processedImageUrl = createFailurePreview(processedFile)
         showError(
           `AI confidence is ${pct}%. Minimum required is 70%. Please upload a clearer, single-item image on a plain background.`,
           'Low Confidence',
           processedImageUrl
         )
-        // Clean up the blob URL when popup is closed (handled by popup cleanup)
-        // Note: We'll need to revoke it manually or let the component handle it
+        // The popup releases it on close; replacement/unmount also release it.
         return
       }
       // Auto-fill category if available
@@ -437,6 +451,7 @@ const handleFileUpload = async (e) => {
       try {
         const { detectColors } = await import('@/utils/color-detector')
         const colors = await detectColors(processedFile)
+        if (generation !== imageGeneration) return
         if (colors && colors.primary) {
           // Normalize detected color (grey -> gray)
           const normalizedColor = normalizeColorValue(colors.primary)
@@ -452,31 +467,48 @@ const handleFileUpload = async (e) => {
         // Don't block upload if color detection fails, just log warning
       }
       
-      // Store processed file for upload and show preview
+      if (generation !== imageGeneration) return
+      // Retain the selected original alongside the processed presentation file.
+      formData.value.original_file = file
       formData.value.image_file = processedFile
+      if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
       const previewBlob = URL.createObjectURL(processedFile)
       formData.value.image_url = previewBlob
       previewUrl.value = previewBlob
       console.log('📸 ManualUploadForm: File stored after AI checks, preview created')
     } catch (aiErr) {
+      if (generation !== imageGeneration) return
       console.error('❌ ManualUploadForm: AI classification error:', aiErr)
       showError('AI service unavailable. Please try again later or use a different image.')
       return
     }
   } catch (error) {
+    if (generation !== imageGeneration) return
     console.error('❌ ManualUploadForm: Error processing file:', error)
     showError('Failed to process image file. Please try again.')
   } finally {
-    uploading.value = false
+    if (generation === imageGeneration) uploading.value = false
   }
 }
 
 const clearImage = () => {
+  if (isSubmitting.value) return
+  imageGeneration++
+  uploading.value = false
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
   previewUrl.value = ''
   formData.value.image_url = ''
   formData.value.image_file = null
+  formData.value.original_file = null
   formData.value.color = ''
 }
+
+onBeforeUnmount(() => {
+  imageGeneration++
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+  if (failurePreviewUrl) URL.revokeObjectURL(failurePreviewUrl)
+  failurePreviewUrl = ''
+})
 
 const handleSubmit = async () => {
   // Mark that user has attempted to submit - this will show validation errors
@@ -581,7 +613,8 @@ const handleSubmit = async () => {
       color: normalizedColor,
       brand: formData.value.brand || null,
       privacy: formData.value.privacy,
-      image_file: formData.value.image_file, // Pass the file for Cloudinary upload
+      original_file: formData.value.original_file,
+      image_file: formData.value.image_file,
     }
 
     console.log('📝 ManualUploadForm: Calling clothesService.addClothes with data:', serviceData)
