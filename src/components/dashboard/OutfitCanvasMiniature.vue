@@ -48,7 +48,7 @@
       <div class="w-16 h-16 rounded-md overflow-hidden shadow-md bg-white dark:bg-zinc-700">
         <ClothingImage
           v-if="item.clothing_item?.image_url || item.image_url"
-          :src="item.clothing_item?.image_url || item.image_url"
+          :record="item" table="clothes" :src="item.clothing_item?.image_url || item.image_url"
           :alt="item.clothing_item?.name || item.name || 'Item'"
           class="w-full h-full object-cover"
         />

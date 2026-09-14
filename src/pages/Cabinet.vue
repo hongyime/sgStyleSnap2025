@@ -363,7 +363,7 @@
           <div class="aspect-square relative overflow-hidden">
             <ClothingImage
               v-if="item.image_url"
-              :src="item.image_url"
+              :record="item" table="clothes" :src="item.image_url"
               :alt="item.name"
               class="w-full h-full object-cover"
             />

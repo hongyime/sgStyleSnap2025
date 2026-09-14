@@ -4,7 +4,7 @@
     <div class="w-full h-full p-4 flex items-center justify-center">
       <ClothingImage
         v-if="item.image_url"
-        :src="item.image_url"
+        :record="item" table="clothes" :src="item.image_url"
         :alt="item.name"
         class="max-w-full max-h-full object-contain"
       />

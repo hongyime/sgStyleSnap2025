@@ -4,9 +4,9 @@
     <div class="flex items-center gap-4 mb-4">
       <!-- Friend Avatar -->
       <div class="w-12 h-12 rounded-full overflow-hidden bg-stone-200 dark:bg-zinc-700">
-        <img
+        <MediaImage
           v-if="proxiedAvatarUrl"
-          :src="proxiedAvatarUrl"
+          :record="suggestion.suggester" table="users" :source-url="suggestion.suggester?.avatar_url || ''" fallback="/images/avatar-placeholder.svg" :src="proxiedAvatarUrl"
           :alt="suggestion.suggester.name"
           class="w-full h-full object-cover"
         />
@@ -58,7 +58,7 @@
         >
           <ClothingImage
             v-if="item.image_url"
-            :src="item.image_url"
+            :record="item" table="clothes" :src="item.image_url"
             :alt="item.name"
             class="w-full h-full object-cover"
           />
@@ -97,6 +97,7 @@
 </template>
 
 <script setup>
+import MediaImage from '@/components/ui/MediaImage.vue'
 import ClothingImage from '@/components/ui/ClothingImage.vue'
 import { ref, computed } from 'vue'
 import { useTheme } from '@/composables/useTheme'

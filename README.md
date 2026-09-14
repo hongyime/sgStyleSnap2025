@@ -136,9 +136,28 @@ SHA-256 before returning an image Blob, and never falls back to the source URL.
 The metadata query explicitly disables the SDK's default retries, so a network
 failure or HTTP 520 ends after one attempt instead of issuing four requests.
 It uses no Vercel proxy, paid transformation, signed URL or shared result cache.
-Application integration must bound simultaneous readers and revoke object URLs
-when records, sessions or views change. Private uploads, full image-view integration
-and live Storage HTTP validation remain required before cutover.
+Thirty clothing/avatar presentation sites now pass exact source references to a
+shared loader, including original clothing and catalog identities in canvas copies.
+It permits three concurrent reads, 128 waiting entries and 64 MiB of retained
+image bytes; currently mounted duplicate views share a download. Offscreen,
+hidden, replaced and unmounted views release URLs. Session/token changes revoke
+and revalidate them. These are bounded in-memory results, never persistent or
+cross-user caches. A denied or invalid image uses a bundled placeholder; private
+mode also prevents legacy avatar error callbacks from restoring provider URLs.
+
+`VITE_PRIVATE_MEDIA_ENABLED` defaults to false. Keep it false until the full
+migration gates pass. Programmatic scoring/try-on and uploads still use their
+existing provider paths; private-byte transport, original/processed upload
+retention, trusted capacity/ownership checks, atomic binding publication and
+hosted Storage validation remain required before activation. The scoring host
+currently responds "Service Suspended", so its replacement transport contract
+cannot yet be verified. No production media has been copied or switched by
+this presentation change.
+
+Run `npm run test:media-views` for desktop/mobile tests of real Vue components
+and the Supabase SDK with intercepted synthetic responses. The fixtures verify
+source identities, shared downloads, viewport loading, sign-out cleanup and
+failure behavior without contacting live services; they do not prove hosted RLS.
 
 The binding planner now checks all five source tables against complete original
 and variant copy checkpoints and explicit delivery-byte receipts. Every field

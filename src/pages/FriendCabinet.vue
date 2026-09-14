@@ -34,9 +34,9 @@
       <div v-if="friend" class="rounded-xl p-6 mb-8 bg-white border border-stone-200 dark:bg-zinc-900 dark:border-zinc-800">
         <div class="flex items-center gap-6">
           <div class="w-20 h-20 rounded-full overflow-hidden bg-stone-100 dark:bg-zinc-800">
-            <img
+            <MediaImage
               v-if="friend.avatar_url"
-              :src="getProxiedImageUrl(friend.avatar_url)"
+              :record="friend" table="users" :source-url="friend?.avatar_url || ''" fallback="/images/avatar-placeholder.svg" :src="getProxiedImageUrl(friend.avatar_url)"
               :alt="friend.name"
               class="w-full h-full object-cover"
               crossorigin="anonymous"
@@ -142,7 +142,7 @@
           <div :class="viewMode === 'grid' ? 'w-full h-full p-4 flex items-center justify-center' : 'w-20 h-20 rounded-lg overflow-hidden flex-shrink-0'">
             <ClothingImage
               v-if="item.image_url"
-              :src="item.image_url"
+              :record="item" table="clothes" :src="item.image_url"
               :alt="item.name"
               :class="viewMode === 'grid' ? 'max-w-full max-h-full object-contain' : 'w-full h-full object-cover'"
             />
@@ -187,6 +187,7 @@
 </template>
 
 <script setup>
+import MediaImage from '@/components/ui/MediaImage.vue'
 import ClothingImage from '@/components/ui/ClothingImage.vue'
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
