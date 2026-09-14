@@ -60,6 +60,22 @@ variant lookup can be diagnosed without repeating the original asset inventory.
 
 Manifest validation: `python -m unittest discover -s tests/maintenance -p test_stylesnap_media.py -v`.
 
+The separate **Encrypted media manifest export** workflow preserves that complete
+raw manifest for private review, including unresolved references and every source
+metadata field. It encrypts the canonical bytes in memory with a fresh AES-256-GCM
+key and IV, wrapping the key with RSA-OAEP SHA-256 for the reviewed public recipient
+in `scripts/stylesnap-export-recipient.pem`. The receiving private key stays off
+GitHub. Only ciphertext is written and uploaded, with one-day artifact retention;
+the receiving owner must retain the downloaded ciphertext before it expires.
+Logs contain aggregate counts, byte totals, public recipient identity and hashes.
+Export is manual on `main`, after tests, with 200 Admin units, 430 total requests,
+128 MiB of aggregate responses, and a 32 MiB raw-manifest limit. It shares the
+existing manifest workflow's concurrency group and does not copy media, write to
+Supabase, change references, or claim a consistent snapshot or completed migration.
+
+Encrypted export validation: `node --test tests/maintenance/stylesnap-manifest-envelope.test.mjs`
+and `python -m unittest discover -s tests/maintenance -p test_stylesnap_manifest_export.py -v`.
+
 Clothing images now use a bundled placeholder for the two known missing legacy
 default URLs and failed image loads. Presentation leaves stored source URLs and
 privacy fields intact; newly created fallback records use the local placeholder.
