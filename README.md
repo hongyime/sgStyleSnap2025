@@ -60,6 +60,12 @@ variant lookup can be diagnosed without repeating the original asset inventory.
 
 Manifest validation: `python -m unittest discover -s tests/maintenance -p test_stylesnap_media.py -v`.
 
+Clothing images now use a bundled placeholder for the two known missing legacy
+default URLs and failed image loads. Presentation leaves stored source URLs and
+privacy fields intact; newly created fallback records use the local placeholder.
+The shared image component preserves caller attributes/events and resets after a
+new source is supplied. This UI repair does not complete the media migration.
+
 ## Installation
 
 ```bash

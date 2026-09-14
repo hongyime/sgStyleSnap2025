@@ -309,7 +309,7 @@
                   <div class="flex items-center gap-3">
                     <!-- Item Image -->
                     <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden flex-shrink-0 shadow-sm bg-white">
-                      <img
+                      <ClothingImage
                         v-if="item.image_url || item.thumbnail_url"
                         :src="item.thumbnail_url || item.image_url"
                         :alt="item.name"
@@ -410,7 +410,7 @@
                   @click.stop="selectItem(item.id)"
                 >
                   <div class="w-32 h-32 overflow-hidden">
-                    <img
+                    <ClothingImage
                       v-if="item.image_url || item.thumbnail_url"
                       :src="item.thumbnail_url || item.image_url"
                       :alt="item.name"
@@ -706,6 +706,7 @@
 </template>
 
 <script setup>
+import ClothingImage from '@/components/ui/ClothingImage.vue'
 import { ref, reactive, onMounted, onUnmounted, watch, computed, nextTick } from 'vue'
 import { useAuthStore } from '@/stores/auth-store'
 import { useRouter } from 'vue-router'

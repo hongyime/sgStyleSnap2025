@@ -19,6 +19,7 @@
 import { supabase, handleSupabaseError } from '@/lib/supabase'
 import { sanitizeEmail, safeLog } from '@/utils/log-sanitizer'
 import { cloudinary } from '@/lib/cloudinary'
+import { CLOTHING_PLACEHOLDER_URL } from '@/utils/clothing-image'
 
 /**
  * Clothing Items Service Class
@@ -337,8 +338,8 @@ export class ClothesService {
             // Use a fallback image URL to satisfy the not-null constraint
             console.warn('⚠️ ClothesService: Using fallback image due to upload failure')
             imageData = {
-              secure_url: 'https://res.cloudinary.com/sgstylesnap/image/upload/f_webp,q_auto:good/v1/defaults/default-clothing-item.webp',
-              thumbnail_url: 'https://res.cloudinary.com/sgstylesnap/image/upload/f_webp,q_auto:good,w_400,h_400,c_fill/v1/defaults/default-clothing-item.webp'
+              secure_url: CLOTHING_PLACEHOLDER_URL,
+              thumbnail_url: CLOTHING_PLACEHOLDER_URL
             }
           }
         }
@@ -346,8 +347,8 @@ export class ClothesService {
         // No image provided, use fallback
         console.log('📸 ClothesService: No image provided, using fallback image')
         imageData = {
-          secure_url: 'https://res.cloudinary.com/sgstylesnap/image/upload/f_webp,q_auto:good/v1/defaults/default-clothing-item.webp',
-          thumbnail_url: 'https://res.cloudinary.com/sgstylesnap/image/upload/f_webp,q_auto:good,w_400,h_400,c_fill/v1/defaults/default-clothing-item.webp'
+          secure_url: CLOTHING_PLACEHOLDER_URL,
+          thumbnail_url: CLOTHING_PLACEHOLDER_URL
         }
       }
 

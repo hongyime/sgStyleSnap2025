@@ -45,7 +45,7 @@
     >
       <!-- Item Image -->
       <div class="w-24 h-24 rounded-lg overflow-hidden shadow-lg bg-white dark:bg-zinc-800">
-        <img
+        <ClothingImage
           v-if="item.image_url"
           :src="item.image_url"
           :alt="item.name"
@@ -124,6 +124,7 @@
 </template>
 
 <script setup>
+import ClothingImage from '@/components/ui/ClothingImage.vue'
 /**
  * Outfit Canvas Component Script
  * 

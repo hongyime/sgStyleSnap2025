@@ -46,7 +46,7 @@
     >
       <!-- Item Image (miniature) -->
       <div class="w-16 h-16 rounded-md overflow-hidden shadow-md bg-white dark:bg-zinc-700">
-        <img
+        <ClothingImage
           v-if="item.clothing_item?.image_url || item.image_url"
           :src="item.clothing_item?.image_url || item.image_url"
           :alt="item.clothing_item?.name || item.name || 'Item'"
@@ -64,6 +64,7 @@
 </template>
 
 <script setup>
+import ClothingImage from '@/components/ui/ClothingImage.vue'
 import { computed, ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import { Shirt } from 'lucide-vue-next'

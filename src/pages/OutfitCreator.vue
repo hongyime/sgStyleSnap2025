@@ -500,7 +500,7 @@
                     <div class="flex items-center gap-3">
                       <!-- Item Image -->
                       <div class="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 shadow-sm bg-white dark:bg-zinc-900">
-                        <img
+                        <ClothingImage
                           v-if="item.image_url"
                           :src="item.image_url"
                           :alt="item.name"
@@ -610,7 +610,7 @@
                 @click.stop="handleItemClick(item.id, $event)"
               >
                 <div class="w-32 h-32 overflow-hidden">
-                  <img
+                  <ClothingImage
                     v-if="item.image_url"
                     :src="item.image_url"
                     :alt="item.name"
@@ -966,7 +966,7 @@
                   :key="item.id"
                   class="aspect-square rounded-lg overflow-hidden bg-stone-100 dark:bg-zinc-800"
                 >
-                  <img
+                  <ClothingImage
                     :src="item.image_url || item.thumbnail_url"
                     :alt="item.name"
                     class="w-full h-full object-cover"
@@ -1083,7 +1083,7 @@
                   class="rounded-lg overflow-hidden bg-stone-100 dark:bg-zinc-800 flex flex-col"
                 >
                   <div class="aspect-square relative overflow-hidden">
-                    <img
+                    <ClothingImage
                       :src="item.image_url || item.thumbnail_url"
                       :alt="item.name"
                       class="w-full h-full object-cover"
@@ -1147,6 +1147,7 @@
 </template>
 
 <script setup>
+import ClothingImage from '@/components/ui/ClothingImage.vue'
 import { ref, computed, onMounted, onUnmounted, watch, reactive, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'

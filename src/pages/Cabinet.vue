@@ -361,7 +361,7 @@
           v-memo="[item.id, item.name, item.image_url, item.is_favorite, selectedCategory, selectedColor, selectedBrand, searchTerm]"
         >
           <div class="aspect-square relative overflow-hidden">
-            <img
+            <ClothingImage
               v-if="item.image_url"
               :src="item.image_url"
               :alt="item.name"
@@ -431,6 +431,7 @@
 </template>
 
 <script setup>
+import ClothingImage from '@/components/ui/ClothingImage.vue'
 /**
  * Cabinet.vue - Closet Management Page
  * 

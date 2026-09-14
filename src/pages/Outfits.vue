@@ -323,7 +323,7 @@
                 class="rounded-xl overflow-hidden bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700"
               >
                 <div class="aspect-square relative">
-                  <img
+                  <ClothingImage
                     v-if="outfitItem.clothing_item?.image_url"
                     :src="outfitItem.clothing_item.image_url"
                     :alt="outfitItem.clothing_item.name"
@@ -417,6 +417,7 @@
 </template>
 
 <script setup>
+import ClothingImage from '@/components/ui/ClothingImage.vue'
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'

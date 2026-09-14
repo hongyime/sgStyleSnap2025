@@ -130,7 +130,7 @@
       >
         <!-- Item Image -->
         <div :class="`aspect-square bg-stone-100 dark:bg-zinc-800`">
-          <img
+          <ClothingImage
             :src="item.image_url"
             :alt="item.name"
             class="w-full h-full object-cover"
@@ -209,6 +209,7 @@
 </template>
 
 <script setup>
+import ClothingImage from '@/components/ui/ClothingImage.vue'
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import { usePopup } from '@/composables/usePopup'
