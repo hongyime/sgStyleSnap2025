@@ -140,7 +140,7 @@
         >
           <!-- Image -->
           <div :class="viewMode === 'grid' ? 'w-full h-full p-4 flex items-center justify-center' : 'w-20 h-20 rounded-lg overflow-hidden flex-shrink-0'">
-            <img
+            <ClothingImage
               v-if="item.image_url"
               :src="item.image_url"
               :alt="item.name"
@@ -187,6 +187,7 @@
 </template>
 
 <script setup>
+import ClothingImage from '@/components/ui/ClothingImage.vue'
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'

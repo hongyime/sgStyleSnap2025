@@ -56,7 +56,7 @@
           :key="item.clothes_id"
           class="aspect-square rounded-lg overflow-hidden bg-stone-100 dark:bg-zinc-800"
         >
-          <img
+          <ClothingImage
             v-if="item.image_url"
             :src="item.image_url"
             :alt="item.name"
@@ -97,6 +97,7 @@
 </template>
 
 <script setup>
+import ClothingImage from '@/components/ui/ClothingImage.vue'
 import { ref, computed } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import { usePopup } from '@/composables/usePopup'

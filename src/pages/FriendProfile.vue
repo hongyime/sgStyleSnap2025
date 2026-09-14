@@ -218,7 +218,7 @@
               @click="openItemDetails(item)"
               class="rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:scale-105 bg-white border border-stone-200 dark:bg-zinc-900 dark:border-zinc-800">
               <div class="aspect-square bg-stone-100 dark:bg-zinc-800 overflow-hidden">
-                <img :src="item.image_url || item.thumbnail_url" :alt="item.name" class="w-full h-full object-cover" />
+                <ClothingImage :src="item.image_url || item.thumbnail_url" :alt="item.name" class="w-full h-full object-cover" />
               </div>
               <div class="p-3">
                 <p class="text-sm font-medium truncate text-black dark:text-white">{{ item.name }}</p>
@@ -302,7 +302,7 @@
             <div class="flex flex-col md:flex-row flex-1 min-h-0 md:min-h-[600px] overflow-hidden">
               <!-- Left: Image -->
               <div class="w-full md:w-1/2 h-[200px] sm:h-[250px] md:h-auto md:min-h-[600px] md:max-h-[60vh] relative overflow-hidden bg-stone-100 dark:bg-zinc-800 flex-shrink-0 flex items-center justify-center">
-                <img
+                <ClothingImage
                   v-if="selectedItem?.image_url"
                   :src="selectedItem.image_url"
                   :alt="selectedItem.name"
@@ -431,6 +431,7 @@
 </template>
 
 <script setup>
+import ClothingImage from '@/components/ui/ClothingImage.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'

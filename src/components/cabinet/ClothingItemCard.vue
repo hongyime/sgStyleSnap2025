@@ -2,7 +2,7 @@
   <div class="group relative aspect-square rounded-3xl overflow-hidden transition-all duration-300 cursor-pointer hover:-translate-y-2 bg-white border border-stone-200 shadow-sm hover:shadow-md">
     <!-- Image -->
     <div class="w-full h-full p-4 flex items-center justify-center">
-      <img
+      <ClothingImage
         v-if="item.image_url"
         :src="item.image_url"
         :alt="item.name"
@@ -62,6 +62,7 @@
 </template>
 
 <script setup>
+import ClothingImage from '@/components/ui/ClothingImage.vue'
 import { useTheme } from '@/composables/useTheme'
 import { Heart, Trash2, Shirt } from 'lucide-vue-next'
 

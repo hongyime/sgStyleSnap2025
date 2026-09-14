@@ -41,7 +41,7 @@
               <p class="text-stone-600 dark:text-zinc-400">Loading item details...</p>
             </div>
             <template v-else>
-              <img
+              <ClothingImage
                 v-if="item?.image_url"
                 :src="item.image_url"
                 :alt="item.name"
@@ -156,6 +156,7 @@
 </template>
 
 <script setup>
+import ClothingImage from '@/components/ui/ClothingImage.vue'
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import { usePopup } from '@/composables/usePopup'
