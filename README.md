@@ -32,6 +32,19 @@ StyleSnap is a full-stack web application designed for fashion enthusiasts who w
 - **@huggingface/inference** - Virtual try-on integration
 - **Three.js** - 3D graphics for avatar carousel
 
+## Storage usage audit
+
+Run **Cloudinary storage usage** from GitHub Actions on `main` to read the product
+environment's aggregate bytes and resource counts using the existing Cloudinary
+repository secrets. The inventory runs only on manual dispatch, after its tests
+pass. It does not list or download assets, change data, or expose provider payloads.
+Its JSON summary includes units and safe failure codes; a failed check exits nonzero.
+Storage includes the provider's retained originals and derived resources, so this
+aggregate alone does not prove that a future Supabase migration fits its allowance.
+Bandwidth follows the provider's usage-report window; it is not a verified calendar-month total.
+
+Local validation: `python -m unittest discover -s tests/maintenance -p test_cloudinary_usage.py -v`.
+
 ## Installation
 
 ```bash
