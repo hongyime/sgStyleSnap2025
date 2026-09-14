@@ -2,6 +2,14 @@ name: Media identity metadata probe
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Choose a bounded metadata query; neither option copies media
+        type: choice
+        default: asset_metadata
+        options:
+          - asset_metadata
+          - batch_fields
   pull_request:
     paths:
       - .github/workflows/media-identity-probe.yml
@@ -45,6 +53,7 @@ jobs:
       - name: Check a sample using at most three metadata requests
         run: python3 scripts/stylesnap_identity_probe.py
         env:
+          STYLESNAP_IDENTITY_MODE: ${{ inputs.mode }}
           VITE_CLOUDINARY_CLOUD_NAME: ${{ secrets.VITE_CLOUDINARY_CLOUD_NAME }}
           CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
