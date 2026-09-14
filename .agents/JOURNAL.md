@@ -10,3 +10,6 @@
 2026-09-14: Private media delivery will reuse current source-row RLS through verified source-field bindings; archive manifests and checkpoints remain service-only. Reads stay disabled during implementation.
 
 2026-09-14: Prepared access policy and browser reader pass 41 isolated tests; current source grants match the fixture. Read buffers are byte-limited and SHA-256 checked, cancellation closes pending streams, and no source-URL fallback or shared auth cache is used. Existing unit tests/build pass; live activation and application integration remain open.
+
+- 2026-09-14: PR #134 and its one manual detail probe are verified in production; the original checkout was fast-forwarded while preserving existing edits. The disabled bulk adapter still needs the verified detail query and an explicit per-asset request budget. Keep every retained record.
+- 2026-09-14: PR #135 is released at a5166348 after 148 hosted Python tests, seven encryption tests and 14 browser smoke tests. Vercel production is READY and both public aliases pass anonymous navigation. Preserve the unapplied archive migration and disabled copy gates; current usage and full media parity remain open.

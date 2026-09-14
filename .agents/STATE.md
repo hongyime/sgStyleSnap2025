@@ -3,7 +3,7 @@
 PR #135 is released at a5166348; production still uses Cloudinary. The archive
 copy remains disabled, its SQL unapplied, and all source media/provenance retained.
 
-Private delivery is being implemented on a separate branch. Read-only live schema
+PR #136 prepares private delivery on a separate branch. Read-only live schema
 checks confirm the existing public, owner, friend and history access rules, and no
 Storage object policies. The new prepared binding/access migration starts with
 reads disabled. It delegates to source-row RLS, matches the current source URL,
