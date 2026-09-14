@@ -9,7 +9,11 @@ the export and probe tools. Asset-detail reads now use the verified endpoint and
 64 KiB cap, with both passes budgeted before requests. The shared 200-unit limit
 supports 100 originals or 88 variants with two bounded inventories. A provider
 failure ends the attempt; staged data and reservations remain for reconciliation.
-All 148 offline tests pass. Hosted validation and source publication are next.
+All 148 offline tests pass. PR #135 carries the archive source and keeps copying
+disabled. Its first hosted build and preview passed, but a shared concurrency
+group cancelled full validation. Offline checks now use workflow/ref groups;
+manual live tools retain their shared group. Validate the updated PR head and
+production release before closing source publication.
 
 The unchanged retained manifest uses 80 checkpoints and reserves 594,719,352
 Storage bytes plus at most 3,298,163,708 Supabase transfer bytes. Corrected source
