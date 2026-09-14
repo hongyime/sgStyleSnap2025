@@ -29,7 +29,7 @@ export function sealManifest(plaintext, publicPem, expectedSha) {
   if (!Buffer.isBuffer(plaintext) || !plaintext.length || plaintext.length > MAX_PLAINTEXT_BYTES) fail('manifest_byte_limit');
   const key = randomBytes(32), iv = randomBytes(12);
   try {
-    const cipher = createCipheriv('aes-256-gcm', key, iv);
+    const cipher = createCipheriv('aes-256-gcm', key, iv, { authTagLength: 16 });
     cipher.setAAD(aad(expectedSha));
     const ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()]);
     return { format: FORMAT, version: 1, recipient_sha256: expectedSha, plaintext_bytes: plaintext.length,
@@ -60,7 +60,7 @@ export function openManifest(envelope, privateKey, expectedRecipientSha) {
   try {
     key = privateDecrypt({ key: privateKey, oaepHash: 'sha256', padding: constants.RSA_PKCS1_OAEP_PADDING }, wrapped);
     if (key.length !== 32) fail('invalid_envelope');
-    const decipher = createDecipheriv('aes-256-gcm', key, iv);
+    const decipher = createDecipheriv('aes-256-gcm', key, iv, { authTagLength: 16 });
     decipher.setAAD(aad(expectedRecipientSha)); decipher.setAuthTag(tag);
     return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
   } catch { fail('envelope_authentication_failed'); }
