@@ -1,0 +1,1 @@
+- 2026-09-14: Added a manual metadata-only identity probe because the retained inventory omits ETags; verify provider field availability before enabling the private copy worker. Preserve all source records and stay on Free plans.
