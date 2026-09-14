@@ -25,3 +25,24 @@ source quota headroom, complete delivery parity and cutover remain open.
 
 The SDK default retried transient metadata failures four times. The follow-up
 sets retry(false); both HTTP 520 and network failures must stop after one request.
+
+PR #137 is released at 1bed9a2a. All 14 PR checks and six main workflows pass;
+43 media-access tests, 76 unit tests and 14 browser smoke tests pass in CI.
+Vercel production is READY and both public aliases pass anonymous navigation.
+The reader remains inactive and delivery SQL unapplied.
+
+Current branch: feat/private-media-integration. Verified source-field planning
+and bounded publication are implemented. Complete original/variant checkpoints
+and explicit delivery-byte proofs are required; missing and external references
+remain in the private plan. The plan reserves additional storage explicitly,
+including the existing checkpoint pool and other projects in the capacity check.
+Transactions publish at most 100 fields, checking hashes, current source URLs
+and object sizes. Conflicts roll back; interrupted batches resume without double
+counting. Completed publication is required before read activation.
+
+All 162 Python maintenance tests and 67 combined media checks pass, including
+24 SQL publication/reservation cases. All 76 existing unit tests, the build
+and 14 browser smoke checks pass. No new SQL, bucket, copy
+or live reader has been activated. Next: finish validation and source review,
+then connect all image views and private uploads. Fresh quota, full byte parity,
+hosted privacy, source-delta and rollback checks still gate the live cutover.

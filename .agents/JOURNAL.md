@@ -17,3 +17,6 @@
 2026-09-14: PR #136 is released at 0eec9655 after all 13 PR checks, 41 new tests, 76 existing unit tests and 14 browser smoke tests. Both production aliases pass anonymous navigation. The original checkout and prior notes are reconciled; local configuration and all retained media remain unchanged. Delivery SQL remains unapplied and views/uploads are not cut over.
 
 2026-09-14: A final SDK review found that metadata GETs retry HTTP 520 and network failures by default. Both synthetic cases made four requests; explicitly disable SDK retries in the private reader and require one-attempt regression tests before activation.
+
+2026-09-14: PR #137 released at 1bed9a2a after 14 passing PR checks, 43 access/reader tests, 76 unit tests and 14 browser smoke tests. Transient metadata errors now make one request. Production and both public aliases verified; source media and local configuration preserved. Private delivery remains inactive.
+2026-09-15: Binding publication retains the full verified plan privately, reserves its own additional storage and commits bounded source-field batches without source edits. Checkpoint, URL, size and completion guards remain prerequisites; publication alone does not authorize application cutover.

@@ -17,7 +17,7 @@
     "test:e2e:headed": "playwright test --headed",
     "purge-old-items": "echo 'Purge script not implemented yet' && exit 0",
     "cloudinary-cleanup": "echo 'Cloudinary cleanup script not implemented yet' && exit 0",
-    "test:media-access": "node --test tests/maintenance/stylesnap-media-access.test.mjs tests/maintenance/stylesnap-private-reader.test.mjs"
+    "test:media-access": "node --test tests/maintenance/stylesnap-media-access.test.mjs tests/maintenance/stylesnap-private-reader.test.mjs tests/maintenance/stylesnap-binding-publication.test.mjs"
   },
   "dependencies": {
     "@getbrevo/brevo": "^5.0.4",
