@@ -308,6 +308,7 @@ scripts/scrape-urls.txt
 
 
 
+
 # AI / editor dot directories (managed via sourcerepo)
 .*
 !.github/

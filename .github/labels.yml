@@ -1,97 +1,35 @@
-# Shared branch/path labels plus StyleSnap-specific paths.
 documentation:
-- changed-files:
-  - any-glob-to-any-file:
-    - docs/**/*
-    - '*.md'
-    - docs/**
-    - README.md
-    - CHANGELOG.md
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'docs/**/*'
+          - '*.md'
+
 backend:
-- changed-files:
-  - any-glob-to-any-file:
-    - src/server/**/*
-    - backend/**/*
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/server/**/*'
+          - 'backend/**/*'
+
 frontend:
-- changed-files:
-  - any-glob-to-any-file:
-    - src/client/**/*
-    - frontend/**/*
-    - ui/**/*
-    - src/components/**
-    - src/pages/**
-    - src/composables/**
-    - src/stores/**
-    - src/services/**
-    - src/utils/**
-    - src/assets/**
-    - src/index.css
-    - src/main.js
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/client/**/*'
+          - 'frontend/**/*'
+          - 'ui/**/*'
+
 tests:
-- changed-files:
-  - any-glob-to-any-file:
-    - '**/__tests__/**/*'
-    - tests/**/*
-    - spec/**/*
-    - tests/**
-    - '**/*.test.js'
-    - '**/*.test.ts'
-    - '**/*.spec.js'
-    - '**/*.spec.ts'
-    - playwright.config.js
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/__tests__/**/*'
+          - 'tests/**/*'
+          - 'spec/**/*'
+
 bug:
-- head-branch:
-  - ^fix/
-  - ^bug/
+  - head-branch:
+      - '^fix/'
+      - '^bug/'
+
 enhancement:
-- head-branch:
-  - ^feat/
-  - ^feature/
-database:
-- changed-files:
-  - any-glob-to-any-file:
-    - database/migrations/**
-    - database/**/*.sql
-    - supabase/**
-api:
-- changed-files:
-  - any-glob-to-any-file:
-    - api/**
-    - '*.js'
-    - '*.ts'
-edge-function:
-- changed-files:
-  - any-glob-to-any-file:
-    - supabase/functions/**
-ci:
-- changed-files:
-  - any-glob-to-any-file:
-    - .github/workflows/**
-    - .github/labeler.yml
-    - .github/**
-config:
-- changed-files:
-  - any-glob-to-any-file:
-    - '*.config.js'
-    - '*.config.ts'
-    - '*.json'
-    - package.json
-    - package-lock.json
-    - tsconfig.json
-    - tailwind.config.js
-    - vite.config.ts
-    - postcss.config.js
-    - vercel.json
-    - .env.example
-styles:
-- changed-files:
-  - any-glob-to-any-file:
-    - src/**/*.css
-    - src/tokens/**
-    - tailwind.config.js
-    - postcss.config.js
-dependencies:
-- changed-files:
-  - any-glob-to-any-file:
-    - package.json
-    - package-lock.json
+  - head-branch:
+      - '^feat/'
+      - '^feature/'
