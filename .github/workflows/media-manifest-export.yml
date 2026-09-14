@@ -1,0 +1,62 @@
+name: Encrypted media manifest export
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/media-manifest-export.yml
+      - scripts/stylesnap_media.py
+      - scripts/stylesnap_manifest_export.py
+      - scripts/stylesnap-manifest-envelope.mjs
+      - scripts/stylesnap-export-recipient.pem
+      - tests/maintenance/test_stylesnap_manifest_export.py
+      - tests/maintenance/stylesnap-manifest-envelope.test.mjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stylesnap-private-media-manifest
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+      - run: node --test tests/maintenance/stylesnap-manifest-envelope.test.mjs
+      - run: python3 -m unittest discover -s tests/maintenance -p 'test_stylesnap_*.py' -v
+
+  export:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+      - name: Preserve the full raw manifest encrypted to the reviewed recipient
+        run: python3 scripts/stylesnap_manifest_export.py
+        env:
+          VITE_CLOUDINARY_CLOUD_NAME: ${{ secrets.VITE_CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          STYLESNAP_ENCRYPTED_MANIFEST: ${{ runner.temp }}/stylesnap-media-manifest.enc.json
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: stylesnap-manifest-encrypted-${{ github.run_id }}
+          path: ${{ runner.temp }}/stylesnap-media-manifest.enc.json
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
