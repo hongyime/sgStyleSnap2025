@@ -45,6 +45,17 @@ Bandwidth follows the provider's usage-report window; it is not a verified calen
 
 Local validation: `python -m unittest discover -s tests/maintenance -p test_cloudinary_usage.py -v`.
 
+The **Private media manifest** workflow performs the next read-only inventory
+stage. It bounds Cloudinary pagination/API units and database reference reads,
+includes backed-up/deleted source records and existing derived assets, and
+reports reference gaps without replacing them. Its complete manifest stays in
+a private temporary runner file; only counts, byte totals and its SHA-256 reach
+the workflow summary. There is no artifact upload, asset copy or database write.
+The tested add-only copy primitive is not exposed by the CLI or workflow; a
+reviewed access, capacity and rollback design is required before enabling it.
+
+Manifest validation: `python -m unittest discover -s tests/maintenance -p test_stylesnap_media.py -v`.
+
 ## Installation
 
 ```bash
