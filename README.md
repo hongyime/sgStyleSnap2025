@@ -53,6 +53,10 @@ a private temporary runner file; only counts, byte totals and its SHA-256 reach
 the workflow summary. There is no artifact upload, asset copy or database write.
 The tested add-only copy primitive is not exposed by the CLI or workflow; a
 reviewed access, capacity and rollback design is required before enabling it.
+The `derived_probe` dispatch option checks only existing transformation details
+and aggregate parity, with a 35-unit Admin API cap. It uses Cloudinary's SDK query
+form and one documented extensionless lookup after an initial 404, so a failed
+variant lookup can be diagnosed without repeating the original asset inventory.
 
 Manifest validation: `python -m unittest discover -s tests/maintenance -p test_stylesnap_media.py -v`.
 
