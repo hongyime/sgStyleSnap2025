@@ -2,6 +2,14 @@ name: Private media manifest
 
 on:
   workflow_dispatch:
+    inputs:
+      phase:
+        description: Bounded read-only inventory stage
+        type: choice
+        default: manifest_only
+        options:
+          - manifest_only
+          - derived_probe
   pull_request:
     paths:
       - .github/workflows/media-manifest.yml
@@ -43,6 +51,7 @@ jobs:
       - name: Inventory privately and report aggregates
         run: python3 scripts/stylesnap_media.py
         env:
+          STYLESNAP_MANIFEST_PHASE: ${{ inputs.phase }}
           VITE_CLOUDINARY_CLOUD_NAME: ${{ secrets.VITE_CLOUDINARY_CLOUD_NAME }}
           CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}

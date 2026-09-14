@@ -63,10 +63,10 @@ class Source:
             return {"resources": copy.deepcopy(self.assets)}
         if path in ("resources/video", "resources/raw", "resources/search"):
             return {"resources": []}
+        if path == "transformations" and params.get("transformation") == "w_400":
+            return {"derived": copy.deepcopy(self.derived)}
         if path == "transformations":
             return {"transformations": [{"name": "w_400"}]}
-        if path == "transformations/w_400":
-            return {"derived": copy.deepcopy(self.derived)}
         raise AssertionError("Unexpected endpoint")
 
     def database(self, table, after=None):
@@ -91,6 +91,51 @@ class Storage:
 
 
 class ManifestTests(unittest.TestCase):
+    def test_transformation_lookup_uses_sdk_query_form(self):
+        source = Source()
+        report = media.derived_probe(source)
+        self.assertEqual(report["derived_count"], 1)
+        self.assertEqual(report["derived_bytes"], 2)
+        self.assertEqual(report["phase"], "derived_probe")
+        self.assertIn(("transformations", {"max_results": 500, "transformation": "w_400"}), source.requests)
+        self.assertFalse(any(path.startswith("resources/") for path, _ in source.requests))
+        self.assertEqual(source.admin_unit_limit, 35)
+
+    def test_extensionless_first_page_404_has_one_bounded_fallback(self):
+        source = Source()
+        source.progress = {"extensionless_detail_lookups": 0}
+        calls = []
+        def detail(path, params=None, units=1):
+            calls.append((path, params))
+            if params["transformation"] == "w_400/f_webp":
+                raise media.MediaError("provider_http_error", 404)
+            return {"derived": source.derived}
+        source.admin = detail
+        self.assertEqual(list(media.transformation_pages(source, "w_400/f_webp")), [source.derived])
+        self.assertEqual([params["transformation"] for _, params in calls], ["w_400/f_webp", "w_400/f_webp/"])
+        self.assertEqual(source.progress["extensionless_detail_lookups"], 1)
+
+    def test_transformation_failure_never_restarts_partial_pages(self):
+        for status in (401, 429, 500):
+            source = Source()
+            source.progress = {"extensionless_detail_lookups": 0}
+            source.admin = lambda *args, **kwargs: (_ for _ in ()).throw(media.MediaError("provider_http_error", status))
+            with self.subTest(status=status), self.assertRaises(media.MediaError):
+                list(media.transformation_pages(source, "w_400"))
+            self.assertEqual(source.progress["extensionless_detail_lookups"], 0)
+        source = Source()
+        source.progress = {"extensionless_detail_lookups": 0}
+        def partial(path, params=None, units=1):
+            if "next_cursor" in params:
+                raise media.MediaError("provider_http_error", 404)
+            return {"derived": source.derived, "next_cursor": "next"}
+        source.admin = partial
+        pages = media.transformation_pages(source, "w_400")
+        self.assertEqual(next(pages), source.derived)
+        with self.assertRaises(media.MediaError):
+            next(pages)
+        self.assertEqual(source.progress["extensionless_detail_lookups"], 0)
+
     def test_full_inventory_reconciles_private_references_and_totals(self):
         source = Source()
         manifest = media.inventory(source)
@@ -257,6 +302,27 @@ class ManifestTests(unittest.TestCase):
 
 
 class BoundaryTests(unittest.TestCase):
+    def test_derived_probe_entrypoint_does_not_read_database_or_write_manifest(self):
+        source = Source()
+        source.database = lambda *args: self.fail("Derived probe read database rows")
+        output = io.StringIO()
+        with patch.dict(media.os.environ, {"STYLESNAP_MANIFEST_PHASE": "derived_probe"}, clear=True), \
+                patch.object(media, "Reader", return_value=source), \
+                patch.object(media, "write_manifest", side_effect=AssertionError("Manifest write attempted")), \
+                contextlib.redirect_stdout(output):
+            self.assertEqual(media.main(), 0)
+        self.assertEqual(json.loads(output.getvalue())["phase"], "derived_probe")
+        self.assertNotIn(PRIVATE, output.getvalue())
+        self.assertNotIn(URL, output.getvalue())
+
+    def test_derived_probe_budget_is_enforced_before_requests(self):
+        reader = media.Reader(env(), Opener())
+        reader.admin_unit_limit = 35
+        reader.admin_units = 35
+        with self.assertRaisesRegex(media.MediaError, "admin_budget_reached"):
+            reader.admin("transformations", {"transformation": "w_400"})
+        self.assertEqual(reader.opener.requests, [])
+
     def test_fixed_hosts_get_and_header_separation(self):
         opener = Opener(b"{}")
         reader = media.Reader(env(), opener)

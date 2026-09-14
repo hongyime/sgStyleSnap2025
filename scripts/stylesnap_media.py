@@ -85,6 +85,7 @@ class Reader:
         self.cloud_auth = "Basic " + base64.b64encode((key + ":" + secret).encode()).decode()
         self.opener = opener or urllib.request.build_opener(NoRedirects())
         self.admin_units = 0
+        self.admin_unit_limit = MAX_ADMIN_UNITS
         self.source_requests = 0
         self.stage = "configuration"
 
@@ -104,7 +105,7 @@ class Reader:
             raise MediaError("request_failed") from None
 
     def admin(self, path, params=None, units=1):
-        if self.admin_units + units > MAX_ADMIN_UNITS:
+        if self.admin_units + units > self.admin_unit_limit:
             raise MediaError("admin_budget_reached")
         if not re.fullmatch(r"(?:usage|resources/(?:image|video|raw|search)|resources/(?:image|video|raw)/[A-Za-z_]+/.+|transformations(?:/.+)?)", path):
             raise MediaError("invalid_admin_path")
@@ -188,11 +189,75 @@ def pages(reader, path, collection, params=None):
     raise MediaError("page_budget_reached")
 
 
+def transformation_pages(reader, name):
+    """Use the official SDK's query form; preserve chained transformation names."""
+    received_page = False
+    try:
+        for page in pages(reader, "transformations", "derived", {"transformation": name}):
+            received_page = True
+            yield page
+    except MediaError as exc:
+        # Cloudinary documents a trailing slash for extensionless variants.
+        # Only retry a first-page 404, once; never restart a partial enumeration.
+        if exc.http_status != 404 or received_page or name.endswith("/"):
+            raise
+        reader.progress["extensionless_detail_lookups"] += 1
+        yield from pages(reader, "transformations", "derived", {"transformation": name + "/"})
+
+
+def derived_inventory(reader):
+    derived = {}
+    transformations = []
+    reader.stage = "transformation_list"
+    for page in pages(reader, "transformations", "transformations"):
+        transformations.extend(page)
+        reader.progress["transformations"] = len(transformations)
+    for transformation in transformations:
+        reader.stage = "derived_asset_list"
+        name = transformation.get("name")
+        if not isinstance(name, str) or not name or len(name) > 2048:
+            raise MediaError("invalid_transformation")
+        for page in transformation_pages(reader, name):
+            for item in page:
+                item_id = item.get("id")
+                if not isinstance(item_id, str) or not item_id:
+                    raise MediaError("missing_derived_identity")
+                if item_id in derived and derived[item_id] != item:
+                    raise MediaError("conflicting_derived_identity")
+                natural(item.get("bytes"))
+                validate_media_url(item.get("secure_url", ""), reader.cloud)
+                derived[item_id] = item
+                reader.progress["derived_assets"] = len(derived)
+                if len(derived) > MAX_ASSETS:
+                    raise MediaError("asset_budget_reached")
+    return transformations, derived
+
+
+def derived_probe(reader):
+    reader.admin_unit_limit = 35
+    reader.progress = {"transformations": 0, "derived_assets": 0, "extensionless_detail_lookups": 0}
+    reader.stage = "usage_before"
+    before = reader.admin("usage")
+    transformations, derived = derived_inventory(reader)
+    reader.stage = "usage_after"
+    after = reader.admin("usage")
+    if natural(before.get("derived_resources")) != natural(after.get("derived_resources")):
+        raise MediaError("source_changed_during_inventory")
+    if len(derived) != natural(after.get("derived_resources")):
+        raise MediaError("provider_count_parity_failed")
+    return {"status": "ok", "phase": "derived_probe", "admin_units": reader.admin_units,
+            "transformation_count": len(transformations), "derived_count": len(derived),
+            "derived_bytes": sum(natural(item["bytes"]) for item in derived.values()),
+            "extensionless_detail_lookups": reader.progress["extensionless_detail_lookups"],
+            "snapshot_consistency_proven": False, "copy_eligible": False}
+
+
 def inventory(reader):
     reader.progress = {"original_assets": 0, "backup_assets": 0,
                        "version_details_completed": 0, "retained_versions": 0,
                        "transformations": 0, "derived_assets": 0,
-                       "database_rows": 0, "database_tables_completed": 0}
+                       "database_rows": 0, "database_tables_completed": 0,
+                       "extensionless_detail_lookups": 0}
     reader.stage = "usage_before"
     before = reader.admin("usage")
     assets = {}
@@ -248,30 +313,7 @@ def inventory(reader):
         reader.progress["version_details_completed"] = len(versions)
         reader.progress["retained_versions"] += len(detail["versions"])
 
-    derived = {}
-    transformations = []
-    reader.stage = "transformation_list"
-    for page in pages(reader, "transformations", "transformations"):
-        transformations.extend(page)
-        reader.progress["transformations"] = len(transformations)
-    for transformation in transformations:
-        reader.stage = "derived_asset_list"
-        name = transformation.get("name")
-        if not isinstance(name, str) or not name or len(name) > 2048:
-            raise MediaError("invalid_transformation")
-        for page in pages(reader, "transformations/" + urllib.parse.quote(name, safe=""), "derived"):
-            for item in page:
-                item_id = item.get("id")
-                if not isinstance(item_id, str) or not item_id:
-                    raise MediaError("missing_derived_identity")
-                if item_id in derived and derived[item_id] != item:
-                    raise MediaError("conflicting_derived_identity")
-                natural(item.get("bytes"))
-                validate_media_url(item.get("secure_url", ""), reader.cloud)
-                derived[item_id] = item
-                reader.progress["derived_assets"] = len(derived)
-                if len(derived) > MAX_ASSETS:
-                    raise MediaError("asset_budget_reached")
+    transformations, derived = derived_inventory(reader)
 
     references = {}
     reader.stage = "database_references"
@@ -407,18 +449,14 @@ def main():
     reader = None
     try:
         reader = Reader(os.environ)
-        manifest = inventory(reader)
-        target = os.environ.get("STYLESNAP_PRIVATE_MANIFEST")
-        if not target:
-            raise MediaError("private_manifest_path_required")
-        path = Path(target).resolve()
-        if path.is_relative_to(Path(__file__).resolve().parent.parent):
-            raise MediaError("manifest_must_be_outside_repository")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-        with os.fdopen(descriptor, "wb") as handle:
-            handle.write(canonical(manifest))
-        report = safe_summary(manifest, reader.admin_units)
+        phase = os.environ.get("STYLESNAP_MANIFEST_PHASE", "manifest_only")
+        if phase == "derived_probe":
+            report["phase"] = phase
+            report = derived_probe(reader)
+        elif phase != "manifest_only":
+            raise MediaError("invalid_manifest_phase")
+        else:
+            report = write_manifest(reader)
     except MediaError as exc:
         report["failure_code"] = exc.code
         if exc.http_status is not None:
@@ -440,6 +478,21 @@ def main():
         with open(summary, "a", encoding="utf-8") as handle:
             handle.write("```json\n" + encoded + "\n```\n")
     return 0 if report["status"] == "ok" else 1
+
+
+def write_manifest(reader):
+    manifest = inventory(reader)
+    target = os.environ.get("STYLESNAP_PRIVATE_MANIFEST")
+    if not target:
+        raise MediaError("private_manifest_path_required")
+    path = Path(target).resolve()
+    if path.is_relative_to(Path(__file__).resolve().parent.parent):
+        raise MediaError("manifest_must_be_outside_repository")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    with os.fdopen(descriptor, "wb") as handle:
+        handle.write(canonical(manifest))
+    return safe_summary(manifest, reader.admin_units)
 
 
 if __name__ == "__main__":
