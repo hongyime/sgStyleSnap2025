@@ -39,6 +39,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:smoke
       - run: npm run test:media-views
+      - run: npm run test:uploads
       - uses: actions/upload-artifact@v7
         if: failure()
         with:

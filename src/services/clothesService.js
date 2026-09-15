@@ -20,6 +20,17 @@ import { supabase, handleSupabaseError } from '@/lib/supabase'
 import { sanitizeEmail, safeLog } from '@/utils/log-sanitizer'
 import { cloudinary } from '@/lib/cloudinary'
 import { CLOTHING_PLACEHOLDER_URL } from '@/utils/clothing-image'
+import { privateMediaEnabled } from '@/lib/media-runtime.js'
+import { getPrivateUploader } from '@/lib/private-upload-runtime.js'
+
+function uploadFields(data) {
+  const fields = {}
+  for (const key of ['name', 'category', 'clothing_type', 'brand', 'size', 'privacy', 'is_favorite', 'style_tags', 'primary_color', 'secondary_colors']) {
+    if (data[key] !== undefined) fields[key] = data[key]
+  }
+  if (data.color !== undefined) fields.primary_color = data.color
+  return fields
+}
 
 /**
  * Clothing Items Service Class
@@ -242,6 +253,10 @@ export class ClothesService {
    */
   async addClothes(clothesData) {
     try {
+      if (privateMediaEnabled) {
+        return await getPrivateUploader().save({ mode: 'create', fields: uploadFields(clothesData), catalog_consent: clothesData.catalog_consent === true },
+          { original: clothesData.original_file, processed: clothesData.image_file })
+      }
       console.log('👕 ClothesService: ========== Adding New Clothing Item ==========')
       console.log('👕 ClothesService: Input data:', {
         name: clothesData.name,
@@ -414,6 +429,13 @@ export class ClothesService {
 
   async updateClothes(id, updates) {
     try {
+      if (privateMediaEnabled && updates.image_file) {
+        return await getPrivateUploader().save({ mode: 'update', source_id: id, fields: uploadFields(updates) },
+          { original: updates.original_file, processed: updates.image_file })
+      }
+      if (privateMediaEnabled && ['image_url', 'thumbnail_url'].some(key => Object.hasOwn(updates, key))) {
+        throw new Error('Replace images using the original and processed files so the upload can be verified.')
+      }
       const { data: { user }, error: userError } = await supabase.auth.getUser()
       if (userError || !user) throw new Error('Not authenticated')
 
@@ -422,6 +444,7 @@ export class ClothesService {
       const updateData = { ...updates }
       delete updateData.image_file
       delete updateData.original_file
+      delete updateData.catalog_consent
 
       // Handle image upload if provided
       if (updates.image_file) {

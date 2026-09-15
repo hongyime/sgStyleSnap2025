@@ -1,5 +1,6 @@
 <template>
   <div class="w-full dark:bg-transparent">
+    <UploadRecovery ref="recoveryPanel" :disabled="isSubmitting || uploading" @busy="recoveryBusy = $event" @recovered="handleRecovered" />
     <!-- Upload Form -->
     <div :class="`rounded-2xl border p-6 lg:p-8 bg-white border-stone-200 dark:bg-zinc-900 dark:border-zinc-800 shadow-sm dark:shadow-none`">
       <div class="flex flex-col lg:flex-row gap-6 lg:gap-8">
@@ -207,6 +208,7 @@
           </div>
           </div>
 
+          <CatalogContribution v-model="formData.catalog_consent" :disabled="isSubmitting || recoveryBusy" />
           <!-- Action Buttons -->
           <div class="flex gap-3 pt-4">
           <button
@@ -236,6 +238,9 @@
 
 <script setup>
 import { ref, computed, onBeforeUnmount } from 'vue'
+import CatalogContribution from './CatalogContribution.vue'
+import UploadRecovery from './UploadRecovery.vue'
+import { getPrivateUploader, privateUploadsEnabled } from '@/lib/private-upload-runtime.js'
 import { useRouter } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
 import { useSanitize } from '@/composables/useSanitize'
@@ -264,6 +269,12 @@ const categoryTypeMapping = {
 
 const uploading = ref(false)
 const isSubmitting = ref(false)
+const recoveryPanel = ref(null), recoveryBusy = ref(false)
+async function handleRecovered() {
+  showSuccess('Item added successfully!')
+  emit('item-added')
+  await router.push('/closet')
+}
 const hasAttemptedSubmit = ref(false)
 const previewUrl = ref('')
 let imageGeneration = 0
@@ -283,6 +294,7 @@ const formData = ref({
   privacy: 'friends', // Default to friends
   image_url: '',
   original_file: null,
+  catalog_consent: false,
   image_file: null, // Store the actual file for upload
 })
 
@@ -350,6 +362,7 @@ const availableTypes = computed(() => {
 })
 
 const canSubmit = computed(() => {
+  if (recoveryBusy.value) return false
   return !uploading.value && formData.value.name &&
          formData.value.category && 
          formData.value.type && 
@@ -470,6 +483,7 @@ const handleFileUpload = async (e) => {
       if (generation !== imageGeneration) return
       // Retain the selected original alongside the processed presentation file.
       formData.value.original_file = file
+      formData.value.catalog_consent = false
       formData.value.image_file = processedFile
       if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
       const previewBlob = URL.createObjectURL(processedFile)
@@ -614,6 +628,7 @@ const handleSubmit = async () => {
       brand: formData.value.brand || null,
       privacy: formData.value.privacy,
       original_file: formData.value.original_file,
+      catalog_consent: formData.value.catalog_consent,
       image_file: formData.value.image_file,
     }
 
@@ -636,7 +651,8 @@ const handleSubmit = async () => {
       showSuccess('Item added successfully!')
       emit('item-added')
       console.log('📝 ManualUploadForm: Navigating to /closet')
-      router.push('/closet')
+      await router.push('/closet')
+      if (result.upload_receipt) await getPrivateUploader().acknowledge(result.upload_receipt).catch(() => {})
     } else {
       console.error('❌ ManualUploadForm: Failed to create item:', result.error)
       showError('Failed to add item. Please try again.')
@@ -648,7 +664,8 @@ const handleSubmit = async () => {
       stack: error.stack,
       name: error.name
     })
-    showError('An error occurred. Please try again.')
+    showError(privateUploadsEnabled ? error.message : 'An error occurred. Please try again.')
+    await recoveryPanel.value?.refresh()
   } finally {
     isSubmitting.value = false
     console.log('📝 ManualUploadForm: Form submission completed')

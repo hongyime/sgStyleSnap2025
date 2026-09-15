@@ -27,6 +27,7 @@
     </div>
 
     <form @submit.prevent="handleSubmit" class="form-content">
+      <UploadRecovery ref="recoveryPanel" :disabled="uploading || processingImage" @busy="recoveryBusy = $event" @recovered="handleRecovered" />
       <!-- Item Name -->
       <div class="form-section">
         <label class="form-label">Item Name</label>
@@ -96,6 +97,7 @@
         </div>
       </div>
 
+      <CatalogContribution v-model="formData.catalog_consent" :disabled="uploading || recoveryBusy" />
       <!-- Action Buttons -->
       <div class="form-actions">
         <button type="button" @click="$emit('close')" class="cancel-btn">
@@ -122,6 +124,9 @@ import { classifyClothingItem, validateImageForClassification } from '@/services
 import { ClothesService } from '@/services/clothesService'
 import { removeBackground } from '@/utils/background-removal'
 import BrandAutocomplete from '@/components/ui/BrandAutocomplete.vue'
+import CatalogContribution from './CatalogContribution.vue'
+import UploadRecovery from './UploadRecovery.vue'
+import { getPrivateUploader, privateUploadsEnabled } from '@/lib/private-upload-runtime.js'
 // Added prop for owned categories
 const props = defineProps({
   isOpen: {
@@ -139,6 +144,8 @@ const emit = defineEmits(['close', 'itemAdded'])
 
 // State
 const uploading = ref(false)
+const recoveryPanel = ref(null), recoveryBusy = ref(false)
+function handleRecovered() { emit('itemAdded'); resetForm(); emit('close') }
 const processingImage = ref(false)
 let imageGeneration = 0
 const selectedFileName = ref('')
@@ -174,12 +181,13 @@ const formData = ref({
   category: '',
   brand: '',
   original_file: null,
+  catalog_consent: false,
   image_file: null
 })
 
 // Computed
 const canSubmit = computed(() => {
-  return !processingImage.value && formData.value.name &&
+  return !processingImage.value && !recoveryBusy.value && formData.value.name &&
          formData.value.category && 
          formData.value.image_file
 })
@@ -223,6 +231,7 @@ const handleFileUpload = async (event) => {
     if (generation !== imageGeneration) return;
     selectedFileName.value = file.name;
     formData.value.original_file = file;
+    formData.value.catalog_consent = false;
     formData.value.image_file = fileForDetection;
     // Try AI classification
     try {
@@ -273,6 +282,7 @@ const handleSubmit = async () => {
       is_favorite: false,
       style_tags: [],
       original_file: formData.value.original_file,
+      catalog_consent: formData.value.catalog_consent,
       image_file: formData.value.image_file
     }
 
@@ -286,6 +296,7 @@ const handleSubmit = async () => {
       emit('itemAdded')
       resetForm()
       emit('close')
+      if (result.upload_receipt) await getPrivateUploader().acknowledge(result.upload_receipt).catch(() => {})
     } else {
       console.error('Failed to add item:', result.error)
       throw new Error(result.error || 'Failed to add item')
@@ -302,9 +313,10 @@ const handleSubmit = async () => {
     } else {
       aiRecognitionStatus.value = {
         type: 'error',
-        message: 'Failed to add item. Please try again.'
+        message: privateUploadsEnabled ? error.message : 'Failed to add item. Please try again.'
       }
     }
+    await recoveryPanel.value?.refresh()
   } finally {
     uploading.value = false
   }
@@ -318,6 +330,7 @@ const resetForm = () => {
     category: '',
     brand: '',
     original_file: null,
+    catalog_consent: false,
     image_file: null
   }
   selectedFileName.value = ''

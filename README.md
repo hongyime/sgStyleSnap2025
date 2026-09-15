@@ -154,6 +154,45 @@ currently responds "Service Suspended", so its replacement transport contract
 cannot yet be verified. No production media has been copied or switched by
 this presentation change.
 
+The prepared `private-media-upload` Edge Function now implements clothing creation
+and image replacement. It verifies the signed-in user, computes hashes from actual
+received files, reserves capacity before Storage writes, and verifies immutable
+original, processed and thumbnail objects by full read-back. One SQL transaction
+publishes the item, its chosen catalog contribution, delivery bindings, retained
+binding versions and a durable recovery receipt. Failed requests retain their
+files and reservations; they never issue cleanup deletes or automatic retries.
+Replacement operations retain the complete prior source row.
+
+The private upload path accepts an original and processed image of up to **4 MiB
+each**, plus a thumbnail up to 1 MiB. It permits one multipart request per Edge
+worker, five unfinished uploads per owner and at most three reserved attempts.
+The lower file limit follows a local Deno maximum-body CPU probe; hosted runtime
+limits must still be checked before activation. Existing retained media and the
+separate archive-copy path are unaffected. Browser drafts retain both Files in
+IndexedDB before sending; reloads and multiple tabs reuse the same request ID.
+Only a verified publication receipt permits local file compaction. A saved-upload
+panel supports explicit retry and hides another account's recovery entries.
+
+All new switches default off. Activation requires the existing private delivery
+gate, `VITE_PRIVATE_UPLOADS_ENABLED=true`, the Edge secret
+`STYLESNAP_PRIVATE_UPLOADS_ENABLED=true`, and `stylesnap_archive.upload_control`.
+Set `STYLESNAP_UPLOAD_ORIGINS` to reviewed application origins; preserve Supabase's
+platform JWT verification. Never expose service credentials in `VITE_` variables.
+`VITE_PRIVATE_CATALOG_POLICY` must match the database's explicit `opt_in`,
+`public_only` or `legacy` choice; the database defaults to no choice. Policy changes
+stop pending publication. The unchanged legacy contribution trigger and retained
+catalog entries are preserved. No policy is selected by this release.
+
+This source release does not deploy the Edge Function, apply the prepared SQL,
+create a bucket, copy retained media or activate private uploads. Full writer
+coverage (catalog adoption, avatars, scoring and try-on), retained-byte parity,
+hosted privacy/runtime checks, fresh organization quota and a tested rollback
+remain prerequisites. Storage and egress headroom checks expire after one hour;
+their verified operational refresh process is also required before cutover.
+Run `npm run test:media-access` for SQL, transport and client-to-publisher tests,
+and `npm run test:uploads` for native IndexedDB, thumbnail and recovery UI tests
+on desktop/mobile with intercepted synthetic providers.
+
 Run `npm run test:media-views` for desktop/mobile tests of real Vue components
 and the Supabase SDK with intercepted synthetic responses. The fixtures verify
 source identities, shared downloads, viewport loading, sign-out cleanup and
