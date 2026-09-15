@@ -1,3 +1,7 @@
+# Private binding version retention - 2026-09-15
+
+Branch `feat/media-binding-versions` prepares private append-only mapping history. The active reader schema stays unchanged. Initial import members retain exact version identities; later replacements and additional active records must not change initial completion counts. All 16 version-retention cases and 67 existing media cases pass locally. Native PostgreSQL 17.11 applies the migration, preserves the initial mapping and membership, and denies private history access. The security advisor reports no warnings or errors. One assertion was corrected to match PostgreSQL SQLSTATE 23502; the orphaned-member rollback then passed. Hosted validation and release remain pending. No live migration, bucket, media copy, writer permission or activation is included. Trusted atomic upload publication, original-byte retention, catalog choice, hosted permissions, full parity, quota and rollback remain required before cutover.
+
 # StyleSnap maintenance
 
 PR #135 is released at a5166348; production still uses Cloudinary. The archive

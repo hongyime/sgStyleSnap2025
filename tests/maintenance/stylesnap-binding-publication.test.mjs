@@ -22,7 +22,7 @@ before(async () => {
   await db.exec(await readFile(new URL('./fixtures/stylesnap-media-access.sql', import.meta.url), 'utf8'))
   await db.exec(`ALTER TABLE storage.objects ADD COLUMN metadata jsonb;
     GRANT SELECT ON public.clothes,public.catalog_items,public.users,public.outfit_collections,public.outfit_history TO service_role;`)
-  for (const name of ['20260914045924_private_media_archive_control.sql', '20260914134525_private_media_delivery.sql', '20260915021000_private_media_binding_publication.sql']) {
+  for (const name of ['20260914045924_private_media_archive_control.sql', '20260914134525_private_media_delivery.sql', '20260915021000_private_media_binding_publication.sql', '20260915021427_private_media_binding_versions.sql']) {
     await db.exec(await readFile(new URL(`../../supabase/migrations/${name}`, import.meta.url), 'utf8'))
   }
 })
@@ -31,7 +31,7 @@ after(async () => { await db?.close() })
 beforeEach(async () => {
   await db.exec(`RESET ROLE;
     UPDATE public.stylesnap_media_delivery_control SET reads_enabled=false,manifest_sha=NULL;
-    TRUNCATE public.stylesnap_media_bindings,stylesnap_archive.binding_members,stylesnap_archive.binding_publications,
+    TRUNCATE public.stylesnap_media_bindings,stylesnap_archive.binding_members,stylesnap_archive.binding_publications,stylesnap_archive.binding_versions,
       stylesnap_archive.reservations,storage.objects,storage.buckets,public.clothes,public.catalog_items,
       public.users,public.outfit_collections,public.outfit_history,public.friends;
     UPDATE stylesnap_archive.control SET writes_enabled=true,manifest_sha='${manifest}',checkpoint_sha='${checkpoint}',

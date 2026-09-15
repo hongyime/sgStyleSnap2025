@@ -1,9 +1,9 @@
 {
   "task": "Complete the private upload path for the accepted lossless Supabase migration",
-  "baseline": "75d544c9b6e9de14fa92f248b6c7f5f0feec1d8a",
-  "branch": "fix/retain-upload-drafts",
-  "previous_pass": "PR139 presentation source and production verified, private delivery remains disabled",
-  "stage": "Focused upload bug correction: local validation passes; hosted validation and production release pending. Private Supabase transport/SQL remain unimplemented.",
+  "baseline": "36cc2c1af61398adb1abd5b18b4583c9a0281b74",
+  "branch": "feat/media-binding-versions",
+  "previous_pass": "PR140 upload draft correction released and production verified",
+  "stage": "Version retention passes 16 focused cases, all 67 existing media cases, native PostgreSQL 17.11 and security advisors. Hosted validation and release pending; live upload transport remains unimplemented.",
   "regressions": {
     "service_before_fix": "two failures: selected-image errors resolved with successful placeholder records",
     "forms_before_fix": "three failures: original_file missing in both forms and dialog submitted during background processing",
@@ -46,5 +46,15 @@
       "database update removed selected files and changed prior URLs before success",
       "recognition-error previews accumulated until unmount"
     ]
+  },
+  "binding_version_followup": {
+    "branch": "feat/media-binding-versions",
+    "stage": "local_and_native_validation_passed",
+    "design": "Keep active lookup shape; retain every distinct mapping in private append-only history and bind original plan members to exact snapshots",
+    "production_migration_applied": false,
+    "replacement_writer_grant_added": false,
+    "version_cases": 16,
+    "existing_media_cases": 67,
+    "security_advisor_issues": 0
   }
 }
