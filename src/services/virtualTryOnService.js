@@ -10,6 +10,11 @@
 
 import { GoogleGenAI } from "@google/genai"
 import { sanitizeUrl, safeLog, safeError, safeWarn } from '@/utils/log-sanitizer'
+import { privateMediaEnabled } from '@/lib/media-runtime.js'
+import { supabase } from '@/lib/supabase.js'
+import { readPrivateMedia } from '@/lib/private-media.js'
+import { mediaReference } from '@/lib/media-loader.js'
+import { fetchTryOnImage, prepareTryOnImage } from '@/utils/tryon-image.js'
 
 export class VirtualTryOnService {
   constructor() {
@@ -23,7 +28,7 @@ export class VirtualTryOnService {
     this.apiKey = viteGeminiKey || ''
     this.client = null
     
-    if (this.apiKey) {
+    if (this.apiKey && !privateMediaEnabled) {
       // Local development: use direct client if VITE_GEMINI_API_KEY is available
       this.client = new GoogleGenAI(this.apiKey)
       this.useProxy = false
@@ -45,8 +50,24 @@ export class VirtualTryOnService {
    * @param {string} options.bottomImageUrl - URL of the bottom/pants image
    * @returns {Promise<Object>} Result with generated image
    */
-  async generateTryOn({ topImageUrl, bottomImageUrl }) {
+  async generateTryOn({ topImageUrl, bottomImageUrl, topItem, bottomItem, signal: callerSignal }) {
+    const controller = new AbortController()
+    const signal = controller.signal
+    const cancel = () => controller.abort()
+    callerSignal?.addEventListener('abort', cancel, { once: true })
+    if (callerSignal?.aborted) cancel()
+    const deadline = setTimeout(cancel, 90_000)
+    let authSubscription
     try {
+      signal.throwIfAborted()
+      if (privateMediaEnabled) {
+        authSubscription = supabase.auth.onAuthStateChange(event => {
+          if (event !== 'INITIAL_SESSION') cancel()
+        }).data.subscription
+        for (const [record, url] of [[topItem, topImageUrl], [bottomItem, bottomImageUrl]]) {
+          if (url && !mediaReference('clothes', record, url)) throw new Error('Clothing image reference is unavailable')
+        }
+      }
       console.log('🎨 VirtualTryOnService: Starting try-on generation with Google Gemini Imagen...')
       safeLog('🎨 Top image:', sanitizeUrl(topImageUrl))
       safeLog('🎨 Bottom image:', sanitizeUrl(bottomImageUrl))
@@ -61,15 +82,17 @@ export class VirtualTryOnService {
       let bottomImageBase64 = null
 
       if (topImageUrl) {
-        topImageBase64 = await this.urlToBase64(topImageUrl)
+        topImageBase64 = await this.imageToBase64(topImageUrl, topItem, signal)
       }
 
       if (bottomImageUrl) {
-        bottomImageBase64 = await this.urlToBase64(bottomImageUrl)
+        bottomImageBase64 = await this.imageToBase64(bottomImageUrl, bottomItem, signal)
       }
 
       // Use Gemini vision model to analyze the clothing images and create a detailed description
-      const clothingDescription = await this.analyzeClothingImages(topImageBase64, bottomImageBase64)
+      signal.throwIfAborted()
+      const clothingDescription = await this.analyzeClothingImages(topImageBase64, bottomImageBase64, signal)
+      signal.throwIfAborted()
       
       // Create a descriptive prompt based on the analyzed images
       const prompt = this.createTryOnPrompt(clothingDescription, topImageBase64, bottomImageBase64)
@@ -86,6 +109,7 @@ export class VirtualTryOnService {
         // Use backend proxy API (uses GEMINI_API_KEY from Vercel server-side)
         // Send the actual clothing images so the API can reference them
         const response = await fetch(this.proxyUrl, {
+          signal,
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -189,7 +213,9 @@ export class VirtualTryOnService {
       }
       
       // Convert base64 image to blob
+      signal.throwIfAborted()
       const imageBlob = await this.base64ToBlob(imageBytes)
+      signal.throwIfAborted()
       const imageUrl = URL.createObjectURL(imageBlob)
 
       console.log('✅ VirtualTryOnService: Try-on generated successfully')
@@ -203,8 +229,12 @@ export class VirtualTryOnService {
       safeError('❌ VirtualTryOnService: Error generating try-on:', error)
       return {
         success: false,
-        error: error.message || 'Failed to generate virtual try-on'
+        error: signal.aborted ? 'Try-on cancelled or timed out. Please try again.' : error.message || 'Failed to generate virtual try-on'
       }
+    } finally {
+      clearTimeout(deadline)
+      callerSignal?.removeEventListener('abort', cancel)
+      authSubscription?.unsubscribe()
     }
   }
 
@@ -215,11 +245,12 @@ export class VirtualTryOnService {
    * @param {string} bottomImageBase64 - Base64 encoded bottom image
    * @returns {Promise<string>} Detailed description of the clothing items
    */
-  async analyzeClothingImages(topImageBase64, bottomImageBase64) {
+  async analyzeClothingImages(topImageBase64, bottomImageBase64, signal) {
     try {
       if (this.useProxy) {
         // Use backend proxy API (uses GEMINI_API_KEY from Vercel server-side)
         const response = await fetch(this.proxyUrl, {
+          signal,
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -241,7 +272,7 @@ export class VirtualTryOnService {
           throw new Error(result.error || 'Failed to analyze images')
         }
 
-        const description = result.description
+        const description = String(result.description || '').slice(0, 4000)
         safeLog('📝 Clothing analysis:', description.substring(0, 150) + '...')
         return description
       } else {
@@ -303,6 +334,7 @@ Return a single concise paragraph written for text-to-image generation. Avoid su
         const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${this.apiKey}`
         
         const geminiResponse = await fetch(geminiApiUrl, {
+          signal,
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -326,12 +358,13 @@ Return a single concise paragraph written for text-to-image generation. Avoid su
           throw new Error('Invalid response from Gemini API')
         }
         
-        const description = geminiResult.candidates[0].content.parts[0].text
+        const description = String(geminiResult.candidates[0].content.parts[0].text || '').slice(0, 4000)
         
         safeLog('📝 Clothing analysis:', description.substring(0, 150) + '...')
         return description
       }
     } catch (error) {
+      signal?.throwIfAborted()
       safeWarn('⚠️ Failed to analyze clothing images with Gemini vision, using default description:', error.message)
       return null
     }
@@ -388,18 +421,12 @@ Do not modify or invent any clothing elements. Reproduce only what appears in th
    * @param {string} url - Image URL
    * @returns {Promise<string>} Base64 data URL
    */
-  async urlToBase64(url) {
-    try {
-      const response = await fetch(url)
-      if (!response.ok) {
-        throw new Error(`Failed to fetch image: ${response.statusText}`)
-      }
-      const blob = await response.blob()
-      return await this.blobToBase64(blob)
-    } catch (error) {
-      safeError('❌ VirtualTryOnService: Error converting URL to base64:', error)
-      throw error
-    }
+  async imageToBase64(url, record, signal) {
+    const blob = privateMediaEnabled
+      ? (await readPrivateMedia(supabase, mediaReference('clothes', record, url), { signal })).blob
+      : await fetchTryOnImage(url, { signal })
+    const input = await prepareTryOnImage(blob, { signal })
+    return this.blobToBase64(input, signal)
   }
 
   /**
@@ -408,11 +435,15 @@ Do not modify or invent any clothing elements. Reproduce only what appears in th
    * @param {Blob} blob - Image blob
    * @returns {Promise<string>} Base64 data URL
    */
-  async blobToBase64(blob) {
+  async blobToBase64(blob, signal) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
-      reader.onloadend = () => resolve(reader.result)
-      reader.onerror = reject
+      const cancel = () => { reader.abort(); reject(new Error('Try-on cancelled')) }
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = () => reject(new Error('Unable to read the clothing image'))
+      reader.onloadend = () => signal?.removeEventListener('abort', cancel)
+      if (signal?.aborted) { cancel(); return }
+      signal?.addEventListener('abort', cancel, { once: true })
       reader.readAsDataURL(blob)
     })
   }

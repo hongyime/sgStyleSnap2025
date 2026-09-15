@@ -37,5 +37,6 @@
     "HTTP deadlines do not include Supabase session lookup. Database confirmation after write-disable still requires an enabled Edge endpoint for browser use.",
     "The 256 KiB egress reservation is a planning bound; monthly free-tier fit and savings are not proven."
   ],
-  "next": "After the provider wait, recheck origin and per-repo conventions, create the reviewed four-section PR, validate one preview, then release and verify production. Do not activate private media before all cutover gates pass."
+  "next": "After the provider wait, recheck origin and per-repo conventions, create the reviewed four-section PR, validate one preview, then release and verify production. Do not activate private media before all cutover gates pass.",
+  "followup": "stylesnap-private-tryon-20260916.json"
 }

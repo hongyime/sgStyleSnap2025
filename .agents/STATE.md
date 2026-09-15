@@ -31,8 +31,8 @@ permits earlier. The wait does not establish monthly capacity.
 Activation remains blocked by full retained-byte and reference parity, source
 delta/rollback tests, hosted privacy/runtime checks and fresh monthly headroom.
 Storage/egress guards expire after one hour: a verified operating process for
-renewing those budgets is required. Avatars, scoring and try-on still require
-complete private writer/consumer coverage; the scoring host is
+renewing those budgets is required. Avatar and scoring paths still require complete private coverage. Try-on input
+transport is prepared locally; live provider/runtime validation is still required. The scoring host is
 suspended. The owner must choose future catalog contribution in the existing
 HTML (`opt_in`, `public_only`, or existing `legacy`). No choice is made here.
 Preserve all stored media, catalog records, source history and local edits.
@@ -42,3 +42,21 @@ confirmation does not repair historical missing bindings. Hosted checks and
 production verification remain separate from local preparation.
 
 Detailed continuation: `.agents/handoffs/stylesnap-private-catalog-20260915.json`.
+
+Try-on follow-up (16 September): protected mode resolves exact retained wardrobe
+references, reads checksum-verified private bytes and never falls back to the old
+provider. Two unused Hugging Face description requests and their diagnostics-only
+import are removed. Existing credentials and the unused service source remain.
+AI preparation rejects inputs over 8 MiB and produces temporary derivatives up to
+1024 pixels / 1 MiB each; stored originals stay intact. Both complete proxy bodies
+fit below 3 MB in the maximum-input fixture. Fine texture may be reduced in the
+AI derivative. Private mode uses the server proxy, cancels on auth changes, and
+accepts the page cancellation signal. The proxy flow has a 90-second deadline;
+this is not a hard bound on image-decoder CPU or upstream generation work.
+Full unit run: 122 passed; expanded focused suite: 11 passed (125 distinct cases).
+Production build passed. All 20 desktop/mobile private-media browser cases pass, including ten try-on
+cases. Hosted checks and real AI generation are still unverified.
+No live AI requests, storage copy, SQL, flags, credentials or deployment changed.
+Private reader download caps, hosted proxy authentication/model compatibility,
+real provider generation, retained-media parity and monthly capacity remain
+separate checks. The independent scoring provider is still suspended.
