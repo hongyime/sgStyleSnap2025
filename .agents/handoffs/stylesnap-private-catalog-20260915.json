@@ -1,0 +1,41 @@
+{
+  "at": "2026-09-15T10:34:36.478900+00:00",
+  "repo": "hongyime/sgStyleSnap2025",
+  "status": "local_validated_unreleased",
+  "base_commit": "e1b66bab9616e45abfe903cacfb5bd5318d91976",
+  "branch": "feat/private-catalog-adoption",
+  "pr_base": "main",
+  "commit_and_pr_title": "feat: prepare private catalog adoption",
+  "pr_sections": [
+    "Summary",
+    "Changes",
+    "Testing",
+    "Checklist"
+  ],
+  "behavior": [
+    "Verified identity and existing catalog media references; no media download or object copy.",
+    "Atomic wardrobe item, two delivery bindings, private source/provenance receipt and bounded egress reservation.",
+    "Native concurrent connections and explicit retry return one active item without overwriting its privacy.",
+    "Existing catalog entries, removed copies and prior binding versions remain retained.",
+    "Legacy mode remains compatible; private mode rejects legacy inserts that omit verified bindings."
+  ],
+  "validation": {
+    "media_tests": 150,
+    "unit_tests": 114,
+    "browser_tests": 42,
+    "build_passed": true,
+    "postgres": "17.11, actual concurrent connections",
+    "advisors": "Three unchanged legacy search_path warnings; none in new objects"
+  },
+  "limitations": [
+    "No live SQL, Edge deployment, private bucket or feature switch changed.",
+    "No hosted CI, preview or production validation yet; source remains local during the Vercel hold.",
+    "Earliest provider-guided retry is 2026-09-16 07:14:05 UTC unless new provider evidence permits earlier; not a verified quota reset.",
+    "Initial retained-byte and binding parity must include existing wardrobe copies; retries do not repair historical missing bindings.",
+    "Avatar, scoring and try-on coverage, owner catalog-contribution choice, complete migration, hosted privacy/runtime, current monthly headroom and rollback remain gates.",
+    "Storage and egress budgets expire after one hour; their verified refresh process remains required.",
+    "HTTP deadlines do not include Supabase session lookup. Database confirmation after write-disable still requires an enabled Edge endpoint for browser use.",
+    "The 256 KiB egress reservation is a planning bound; monthly free-tier fit and savings are not proven."
+  ],
+  "next": "After the provider wait, recheck origin and per-repo conventions, create the reviewed four-section PR, validate one preview, then release and verify production. Do not activate private media before all cutover gates pass."
+}

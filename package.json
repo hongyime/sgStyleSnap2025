@@ -19,7 +19,8 @@
     "test:e2e:headed": "playwright test --headed",
     "purge-old-items": "echo 'Purge script not implemented yet' && exit 0",
     "cloudinary-cleanup": "echo 'Cloudinary cleanup script not implemented yet' && exit 0",
-    "test:media-access": "node --test --test-concurrency=1 tests/maintenance/stylesnap-media-access.test.mjs tests/maintenance/stylesnap-private-reader.test.mjs tests/maintenance/stylesnap-binding-publication.test.mjs tests/maintenance/stylesnap-binding-versions.test.mjs tests/maintenance/stylesnap-upload-receipts.test.mjs tests/maintenance/stylesnap-trusted-upload.test.mjs tests/maintenance/stylesnap-upload-flow.test.mjs"
+    "test:media-access": "node --test --test-concurrency=1 tests/maintenance/stylesnap-media-access.test.mjs tests/maintenance/stylesnap-private-reader.test.mjs tests/maintenance/stylesnap-binding-publication.test.mjs tests/maintenance/stylesnap-binding-versions.test.mjs tests/maintenance/stylesnap-upload-receipts.test.mjs tests/maintenance/stylesnap-trusted-upload.test.mjs tests/maintenance/stylesnap-upload-flow.test.mjs tests/maintenance/stylesnap-catalog-adoption.test.mjs",
+    "test:catalog": "playwright test --config playwright.catalog.config.js"
   },
   "dependencies": {
     "@getbrevo/brevo": "^5.0.4",
