@@ -13,12 +13,13 @@
     "test": "vitest run --maxWorkers=1 --no-file-parallelism",
     "test:smoke": "playwright test --config playwright.smoke.config.js",
     "test:media-views": "playwright test --config playwright.media.config.js",
+    "test:uploads": "playwright test --config playwright.uploads.config.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "purge-old-items": "echo 'Purge script not implemented yet' && exit 0",
     "cloudinary-cleanup": "echo 'Cloudinary cleanup script not implemented yet' && exit 0",
-    "test:media-access": "node --test tests/maintenance/stylesnap-media-access.test.mjs tests/maintenance/stylesnap-private-reader.test.mjs tests/maintenance/stylesnap-binding-publication.test.mjs tests/maintenance/stylesnap-binding-versions.test.mjs"
+    "test:media-access": "node --test --test-concurrency=1 tests/maintenance/stylesnap-media-access.test.mjs tests/maintenance/stylesnap-private-reader.test.mjs tests/maintenance/stylesnap-binding-publication.test.mjs tests/maintenance/stylesnap-binding-versions.test.mjs tests/maintenance/stylesnap-upload-receipts.test.mjs tests/maintenance/stylesnap-trusted-upload.test.mjs tests/maintenance/stylesnap-upload-flow.test.mjs"
   },
   "dependencies": {
     "@getbrevo/brevo": "^5.0.4",

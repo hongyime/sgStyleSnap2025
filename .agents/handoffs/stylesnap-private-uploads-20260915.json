@@ -1,9 +1,9 @@
 {
   "task": "Complete the private upload path for the accepted lossless Supabase migration",
-  "baseline": "36cc2c1af61398adb1abd5b18b4583c9a0281b74",
-  "branch": "feat/media-binding-versions",
-  "previous_pass": "PR140 upload draft correction released and production verified",
-  "stage": "Version retention passes 16 focused cases, all 67 existing media cases, native PostgreSQL 17.11 and security advisors. Hosted validation and release pending; live upload transport remains unimplemented.",
+  "baseline": "148b6d63a2f7e43348105ba0c6a4c0ba20de2bf1",
+  "branch": "feat/trusted-media-uploads",
+  "previous_pass": "PR141 binding versions released; live source still Cloudinary",
+  "stage": "Trusted create/replacement transport, atomic publication and browser recovery implemented; final checks and main-target PR release in progress",
   "regressions": {
     "service_before_fix": "two failures: selected-image errors resolved with successful placeholder records",
     "forms_before_fix": "three failures: original_file missing in both forms and dialog submitted during background processing",
@@ -56,5 +56,35 @@
     "version_cases": 16,
     "existing_media_cases": 67,
     "security_advisor_issues": 0
+  },
+  "production_migration_applied": false,
+  "production_cutover": false,
+  "trusted_uploads": {
+    "file_limit_bytes": 4194304,
+    "thumbnail_limit_bytes": 1048576,
+    "pending_limit_per_owner": 5,
+    "attempt_limit": 3,
+    "originals_preserved": true,
+    "default_enabled": false,
+    "catalog_policy_selected": false,
+    "native_postgres": "17.11 concurrency/permissions and atomic publication pass",
+    "browser_cases": 12,
+    "existing_media_view_cases": 10,
+    "unit_cases": 110,
+    "local_runtime_probe": {
+      "deno": "2.9.6",
+      "request_file_bytes": 9437184,
+      "cpu_ms": 579,
+      "sampled_process_rss": 135110656,
+      "hosted_proven": false
+    },
+    "required_followup": [
+      "Full catalog/avatar/scoring/try-on writer and reader coverage",
+      "Complete retained-media copy and delivery parity",
+      "Hosted permissions and runtime validation",
+      "Current organization capacity and one-hour headroom refresh process",
+      "Catalog contribution choice",
+      "Final delta and rollback"
+    ]
   }
 }
