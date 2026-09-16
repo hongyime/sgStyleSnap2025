@@ -1,3 +1,11 @@
+# Try-on private-binding fix ready for post-hold merge
+
+PR #143 (`feat/private-catalog-adoption`, HEAD `dcbe475e`) opened against main: virtual try-on now uses `readPrivateMedia` + verified `mediaReference('clothes', record, url)` for both top and bottom garments in private mode; the two previously unused descriptions are wired. `npm test` = 125/125 green (13 files) including the three previously-failing private-consumer regressions. No private storage URLs exposed to client. Branch pushed to `origin/feat/private-catalog-adoption`.
+
+DO NOT MERGE before 2026-09-16T07:14:05Z UTC (Vercel deployment retry hold from PR #142 rate-limit). After hold lifts: validate one preview + production release before merge. Cloudinary remains the live provider; private-media flag stays off until all migration gates pass.
+
+---
+
 # StyleSnap maintenance
 
 Production source is at PR #142 (`e1b66bab`). Cloudinary remains active; no private
