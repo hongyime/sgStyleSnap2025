@@ -1,0 +1,15 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Private try-on fixture</title></head>
+<body><p>Isolated private try-on fixture</p><script type="module">
+import { VirtualTryOnService } from '../../src/services/virtualTryOnService.js'
+import { prepareTryOnImage, fetchTryOnImage } from '../../src/utils/tryon-image.js'
+const row = n => ({ id: `canvas-${n}`, originalId: `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`, image_url: `https://old-provider.example/${n}.png` })
+window.tryOnFixture = {
+  prepareTryOnImage, fetchTryOnImage,
+  generate: async () => {
+    const top = row(1), bottom = row(2)
+    const result = await new VirtualTryOnService().generateTryOn({ topImageUrl: top.image_url, bottomImageUrl: bottom.image_url, topItem: top, bottomItem: bottom })
+    if (result.imageUrl) URL.revokeObjectURL(result.imageUrl)
+    return { success: result.success, error: result.error, bytes: result.imageBlob?.size }
+  }
+}
+</script></body></html>

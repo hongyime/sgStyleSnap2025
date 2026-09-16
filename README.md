@@ -185,13 +185,44 @@ catalog entries are preserved. No policy is selected by this release.
 
 This source release does not deploy the Edge Function, apply the prepared SQL,
 create a bucket, copy retained media or activate private uploads. Full writer
-coverage (catalog adoption, avatars, scoring and try-on), retained-byte parity,
+coverage (avatars, scoring and try-on), retained-byte parity,
 hosted privacy/runtime checks, fresh organization quota and a tested rollback
 remain prerequisites. Storage and egress headroom checks expire after one hour;
 their verified operational refresh process is also required before cutover.
 Run `npm run test:media-access` for SQL, transport and client-to-publisher tests,
 and `npm run test:uploads` for native IndexedDB, thumbnail and recovery UI tests
 on desktop/mobile with intercepted synthetic providers.
+
+The prepared `private-catalog-adoption` Edge Function adds catalog items to a
+closet using verified existing processed-image and thumbnail bindings. It does
+not download or copy media. The server verifies identity; one SQL transaction
+creates the wardrobe item, both bindings, a private source/provenance receipt
+and a bounded egress reservation. Catalog records and removed wardrobe copies
+remain intact. Simultaneous requests or an explicit retry after a lost response
+return the same active item without changing its sharing setting. Catalog
+additions remain separate from the uploaded-photo count limit.
+
+This path defaults off independently of the future catalog-contribution policy.
+After all migration gates pass, it requires private delivery plus
+`VITE_PRIVATE_CATALOG_ADOPTIONS_ENABLED=true`, Edge configuration
+`STYLESNAP_CATALOG_ADOPTIONS_ENABLED=true` and the database control
+`stylesnap_archive.upload_control.catalog_adoptions_enabled=true`. The existing
+reviewed `STYLESNAP_UPLOAD_ORIGINS` allowlist also applies. Requests are limited
+to 1 KiB, provider responses to 64 KiB and browser responses to 4 KiB. HTTP work
+has a 20-second Edge deadline and a 25-second browser deadline; there are no
+automatic retries. New writes require fresh Storage/egress budgets and database
+capacity. Existing committed items remain confirmable through the SQL function
+after database writes are disabled; the Edge endpoint must remain enabled for
+browser confirmation.
+
+When private delivery is active, the database rejects legacy catalog inserts or
+image-pointer changes that bypass the verified writer. The legacy Cloudinary
+mode remains compatible. Initial migration must cover every existing wardrobe
+binding; retry confirmation does not repair historical unbound copies. Run
+`npm run test:catalog` for desktop/mobile service tests with synthetic providers.
+This preparation has not applied live SQL, deployed an Edge Function or enabled
+private media; hosted privacy, runtime, complete migration and monthly headroom
+still need verification before activation.
 
 Run `npm run test:media-views` for desktop/mobile tests of real Vue components
 and the Supabase SDK with intercepted synthetic responses. The fixtures verify

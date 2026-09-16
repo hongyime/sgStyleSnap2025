@@ -1,4 +1,6 @@
 import { supabase } from '@/lib/supabase'
+import { privateMediaEnabled } from '@/lib/media-runtime.js'
+import { getPrivateCatalogClient } from '@/lib/private-catalog-runtime.js'
 
 /**
  * Catalog Service
@@ -192,6 +194,7 @@ export class CatalogService {
    * @returns {Promise<string>} UUID of the newly created clothing item
    */
   async addToCloset(catalogItemId, privacy = 'friends') {
+    if (privateMediaEnabled) return getPrivateCatalogClient().add(catalogItemId, privacy)
     try {
       console.log('📦 CatalogService: ========== Adding Catalog Item to Closet ==========')
       console.log('📦 CatalogService: Catalog item ID:', catalogItemId)

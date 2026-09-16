@@ -425,23 +425,6 @@ async function logApiConfiguration() {
   }
   console.log('')
   
-  // Hugging Face Configuration
-  const huggingfaceToken = import.meta.env.VITE_HUGGINGFACE_API_TOKEN
-  const isHuggingFaceConfigured = !!huggingfaceToken
-  
-  console.log(`🤖 Hugging Face:`)
-  console.log(`   API Token: ${huggingfaceToken ? `✅ Set (length: ${huggingfaceToken.length})` : '❌ Not set'}`)
-  console.log(`   Status: ${isHuggingFaceConfigured ? '✅ Configured' : '❌ Not configured'}`)
-  
-  // Check if Hugging Face services are initialized
-  try {
-    const { llamaDescriptionService } = await import('@/services/llamaDescriptionService')
-    console.log(`   Llama Service: ${llamaDescriptionService.client ? '✅ Initialized' : '❌ Not initialized'}`)
-  } catch (e) {
-    console.log(`   Llama Service: ⚠️  Could not check initialization`)
-  }
-  console.log('')
-  
   // Google Gemini Configuration
   const viteGeminiKey = import.meta.env.VITE_GEMINI_API_KEY
   const isGeminiConfigured = !!viteGeminiKey

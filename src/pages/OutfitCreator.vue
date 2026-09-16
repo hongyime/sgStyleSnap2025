@@ -1160,7 +1160,6 @@ import { OutfitsService } from '@/services/outfitsService'
 import { FriendsService } from '@/services/friendsService'
 import { NotificationsService } from '@/services/notificationsService'
 import { VirtualTryOnService } from '@/services/virtualTryOnService'
-import { llamaDescriptionService } from '@/services/llamaDescriptionService'
 import { generateRecommendations, getCategoryDisplayName } from '@/services/recommendation-service.js'
 import { weatherService } from '@/services/weatherService'
 import { getFirstName } from '@/utils'
@@ -4276,6 +4275,12 @@ const addOutfit = () => {
 /**
  * Show virtual try-on modal and generate image
  */
+let tryOnController
+onUnmounted(() => {
+  tryOnController?.abort()
+  if (virtualTryOnImageUrl.value) URL.revokeObjectURL(virtualTryOnImageUrl.value)
+})
+
 const showVirtualTryOn = async () => {
   try {
     console.log('🎨 OutfitCreator: Showing virtual try-on...')
@@ -4303,6 +4308,7 @@ const showVirtualTryOn = async () => {
     // If items don't match or no result exists, generate new try-on
     if (virtualTryOnImageUrl.value && !virtualTryOnMatchesCanvas.value) {
       console.log('🎨 OutfitCreator: Canvas items changed, generating new try-on')
+      URL.revokeObjectURL(virtualTryOnImageUrl.value)
       virtualTryOnImageUrl.value = null
       virtualTryOnItemIds.value = null
       virtualTryOnError.value = null
@@ -4337,52 +4343,14 @@ const showVirtualTryOn = async () => {
     console.log('🎨 OutfitCreator: Top item:', topItem.name)
     console.log('🎨 OutfitCreator: Bottom item:', bottomItem.name)
     
-    // Generate AI descriptions for top and bottom items using Llama-4-Scout
     const topImageUrl = topItem.image_url || topItem.thumbnail_url
     const bottomImageUrl = bottomItem.image_url || bottomItem.thumbnail_url
-    
-    // Generate description for top item
-    console.log('🤖 OutfitCreator: Generating AI description for top item...')
-    try {
-      const topDescriptionResult = await llamaDescriptionService.generateDescription(
-        topImageUrl,
-        'tops'
-      )
-      
-      if (topDescriptionResult.success && topDescriptionResult.description) {
-        console.log('✅ OutfitCreator: Top item AI description generated successfully')
-        console.log('📋 OutfitCreator: Top item description (JSON):', JSON.stringify(topDescriptionResult.description, null, 2))
-      } else {
-        console.warn('⚠️ OutfitCreator: Top item description generation returned no data')
-      }
-    } catch (topError) {
-      console.warn('⚠️ OutfitCreator: Failed to generate top item description:', topError.message)
-      // Continue with try-on even if description fails
-    }
-    
-    // Generate description for bottom item
-    console.log('🤖 OutfitCreator: Generating AI description for bottom item...')
-    try {
-      const bottomDescriptionResult = await llamaDescriptionService.generateDescription(
-        bottomImageUrl,
-        'bottoms'
-      )
-      
-      if (bottomDescriptionResult.success && bottomDescriptionResult.description) {
-        console.log('✅ OutfitCreator: Bottom item AI description generated successfully')
-        console.log('📋 OutfitCreator: Bottom item description (JSON):', JSON.stringify(bottomDescriptionResult.description, null, 2))
-      } else {
-        console.warn('⚠️ OutfitCreator: Bottom item description generation returned no data')
-      }
-    } catch (bottomError) {
-      console.warn('⚠️ OutfitCreator: Failed to generate bottom item description:', bottomError.message)
-      // Continue with try-on even if description fails
-    }
-    
+    tryOnController = new AbortController()
+
     // Generate virtual try-on
     const result = await virtualTryOnService.generateTryOn({
-      topImageUrl: topImageUrl,
-      bottomImageUrl: bottomImageUrl
+      topImageUrl, bottomImageUrl, topItem, bottomItem,
+      signal: tryOnController.signal
     })
     
     if (result.success) {

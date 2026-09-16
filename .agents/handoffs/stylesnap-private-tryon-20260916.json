@@ -1,0 +1,38 @@
+{
+  "at": "2026-09-15T20:38:48.776223+00:00",
+  "repo": "hongyime/sgStyleSnap2025",
+  "branch": "feat/private-catalog-adoption",
+  "base": "main",
+  "status": "local_validated_unreleased",
+  "commit_title": "fix: use verified images for virtual try-on",
+  "planned_combined_pr_title": "feat: prepare private catalog adoption and try-on inputs",
+  "pr_sections": [
+    "Summary",
+    "Changes",
+    "Testing",
+    "Checklist"
+  ],
+  "behavior": [
+    "Private input uses exact clothes bindings and verified bytes without old-provider fallback.",
+    "Remove two unused Hugging Face calls and the diagnostics-only service import; retain existing credentials/source.",
+    "Prepare temporary derivatives up to 1024 pixels and 1 MiB each; reject source inputs above 8 MiB without changing originals.",
+    "Private mode uses the server proxy; cancel on auth changes, caller cancellation and a 90-second client deadline."
+  ],
+  "validation": {
+    "full_unit_run": 122,
+    "expanded_focused_run": 11,
+    "distinct_unit_cases": 125,
+    "browser_private_media_and_tryon": 20,
+    "build": true,
+    "live_ai_calls": 0
+  },
+  "limitations": [
+    "Production and feature flags remain unchanged; hosted CI still required.",
+    "Client cancellation does not prove cancellation or cost savings at the upstream AI provider.",
+    "Image decoder CPU is not hard-limited; private media reads retain their existing independent 50 MB maximum.",
+    "Hosted proxy authentication, AI model/API compatibility and real generation remain to be validated.",
+    "Scoring host remains suspended; avatar/scoring writers and consumers, full parity, quota and rollback remain gates.",
+    "Owner catalog contribution choice remains open."
+  ],
+  "next": "Validate the combined local branch after the Vercel retry hold; do not activate private media before all migration gates pass."
+}
