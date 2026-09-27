@@ -182,7 +182,6 @@ async function sendEmail(
       },
       to: [{ email: to }],
       // Temporarily disabled CC for testing
-      // cc: [{ email: 'hello@hong-yi.me' }],
       subject,
       htmlContent: html,
       headers: {

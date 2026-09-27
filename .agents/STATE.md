@@ -68,3 +68,7 @@ No live AI requests, storage copy, SQL, flags, credentials or deployment changed
 Private reader download caps, hosted proxy authentication/model compatibility,
 real provider generation, retained-media parity and monthly capacity remain
 separate checks. The independent scoring provider is still suspended.
+
+## Reviewed workspace maintenance - 2026-09-27
+
+Publish the reviewed portability and privacy maintenance from the current default branch, preserving concurrent upstream work and original workspace changes. Validation is limited to the documented offline fixtures and hosted checks; no live data job or deployment command was executed locally.

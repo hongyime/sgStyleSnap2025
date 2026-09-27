@@ -15,8 +15,13 @@ jobs:
     steps:
       - name: Send test email via Brevo API
         env:
+          BREVO_KEEPALIVE_EMAIL: ${{ secrets.BREVO_KEEPALIVE_EMAIL }}
           BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
         run: |
+          if [[ -z "$BREVO_KEEPALIVE_EMAIL" ]]; then
+            echo "Keepalive skipped: configure the private BREVO_KEEPALIVE_EMAIL secret."
+            exit 0
+          fi
           echo "📧 Sending Brevo keepalive email..."
 
           HTTP_STATUS=$(curl -s -o /tmp/brevo_response.json -w "%{http_code}" \
@@ -27,19 +32,17 @@ jobs:
             -H "accept: application/json" \
             -H "api-key: $BREVO_API_KEY" \
             -H "content-type: application/json" \
-            -d '{
+            -d "$(jq -n --arg recipient "$BREVO_KEEPALIVE_EMAIL" '{
               "sender": {
                 "name": "SG Style Snap",
                 "email": "noreply-sgstylesnap@hong-yi.me"
               },
-              "to": [{ "email": "hello@hong-yi.me" }],
+              "to": [{ "email": $recipient }],
               "subject": "[StyleSnap] Brevo keepalive ping",
-              "htmlContent": "<p>This is an automated keepalive email to prevent the Brevo account from deactivating due to inactivity.</p><p>Sent at: '"$(date -u)"'</p>"
-            }')
+              "htmlContent": "<p>Automated account keepalive.</p>"
+            }')")
 
           echo "HTTP Status: $HTTP_STATUS"
-          echo "Response body:"
-          cat /tmp/brevo_response.json
 
           if [[ "$HTTP_STATUS" == "201" ]]; then
             echo "✅ Brevo keepalive email sent successfully"

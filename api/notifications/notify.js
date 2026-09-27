@@ -167,7 +167,6 @@ export default async function handler(req, res) {
 
     const email = new Brevo.SendSmtpEmail();
     email.to = [{ email: recipientEmail }];
-    email.cc = [{ email: 'hello@hong-yi.me' }];
     email.sender = { name: 'SG Style Snap', email: 'noreply-sgstylesnap@hong-yi.me' };
     email.subject = subject;
     email.htmlContent = htmlContent;
