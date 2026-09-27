@@ -32,3 +32,5 @@
 2026-09-16: Prepare private try-on inputs on feat/private-catalog-adoption. Resolve retained wardrobe identities through the verified private reader, retain originals, bound temporary AI derivatives and cancel private work on auth changes. Remove the two unused description calls without retiring credentials. Full unit/build and focused desktop/mobile checks pass; retain the Vercel hold, hosted provider checks and all storage activation gates.
 
 2026-09-16: PR #143 opened for feat/private-catalog-adoption (dcbe475e). Private try-on now uses readPrivateMedia + mediaReference for both top and bottom; 125/125 tests pass. Hold merge until 2026-09-16T07:14:05Z UTC per Vercel retry gate.
+
+- 2026-09-27: Prepared reviewed portability/privacy changes on the current default branch with maintenance-only file selection and preserved original workspace state.
